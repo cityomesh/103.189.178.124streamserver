@@ -69,9 +69,7 @@ if ($result !== false) {
     }
 }
 
-// ----------------------
-// 🟢 Final Response
-// ----------------------
+
 echo json_encode([
     "status" => "ok",
     "ping_ms" => round($ping, 2),

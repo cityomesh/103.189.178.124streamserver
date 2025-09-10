@@ -1750,27 +1750,105 @@ function testPing(targetIp) {
     });
 }
 
+// function pingBetweenServers() {
+//     const serverA = SPEEDTEST_SERVERS[document.getElementById("serverA").value];
+//     const serverB = SPEEDTEST_SERVERS[document.getElementById("serverB").value];
+
+//     if (!serverA || !serverB) {
+//         I("serverToServerMsg").textContent = "❌ Please select both servers.";
+//         return;
+//     }
+
+//     // 🟡 Show loading state
+//     I("serverToServerMsg").textContent = `⏳ Testing ${serverA.name} → ${serverB.name} ...`;
+//     I("serverToServerMsg").style.color = "black";
+
+//     fetch(`/backend/ping_server_to_server.php?from=${getServerIp(serverA.server)}&to=${getServerIp(serverB.server)}`)
+ 	// fetch(`http://103.189.178.121/streamserver/backend/ping_server_to_server.php?to=${encodeURIComponent(getServerIp(serverB.server))}`)
+
+//         .then(res => res.json())
+//         .then(data => {
+//             if (data.status === "ok") {
+//                 I("serverToServerMsg").textContent = `✅ ${serverA.name} → ${serverB.name} tested successfully`;
+//                 I("serverToServerMsg").style.color = "green";
+
+//                 // Reset placeholders
+//                 I("pingText").textContent = "-";
+//                 I("jitText").textContent = "-";
+//                 I("dlText").textContent = "-";
+//                 I("ulText").textContent = "-";
+
+//                 // Progressive update sequence
+//                 setTimeout(() => {
+//                     I("pingText").textContent = data.ping_ms ? format(data.ping_ms) : "-";
+//                     I("sharePing").textContent = I("pingText").textContent;
+//                 }, 500);
+
+//                 setTimeout(() => {
+//                     I("jitText").textContent = data.jitter_ms ? format(data.jitter_ms) : "-";
+//                     I("shareJitter").textContent = I("jitText").textContent;
+//                 }, 1000);
+
+//                 setTimeout(() => {
+//                     I("ulText").textContent = data.upload_mbps ? format(data.upload_mbps) : "-";
+//                     I("shareUpload").textContent = I("ulText").textContent;
+
+//                     if (data.upload_mbps) {
+//                         drawMeter(I("ulMeter"), mbpsToAmount(Number(data.upload_mbps)), meterBk, ulColor, 1, progColor);
+//                     }
+//                 }, 1500);
+
+//                 setTimeout(() => {
+//                     I("dlText").textContent = data.download_mbps ? format(data.download_mbps) : "-";
+//                     I("shareDownload").textContent = I("dlText").textContent;
+
+//                     if (data.download_mbps) {
+//                         drawMeter(I("dlMeter"), mbpsToAmount(Number(data.download_mbps)), meterBk, dlColor, 1, progColor);
+//                     }
+//                 }, 2000);
+
+//                 // ✅ Populate Share Results Area (basic info immediately)
+//                 let testId = generateUUID();
+//                 I("testId").textContent = testId;
+//                 I("serverUsed").textContent = `${serverA.name} → ${serverB.name}`;
+//                 I("shareIp").textContent = `${getServerIp(serverA.server)} → ${getServerIp(serverB.server)}`;
+//                 I("shareDateTime").textContent = new Date().toLocaleString();
+//                 I("shareArea").style.display = "";
+
+//             } else {
+//                 I("serverToServerMsg").textContent = `❌ ${serverA.name} → ${serverB.name} unreachable`;
+//                 I("serverToServerMsg").style.color = "red";
+//             }
+
+//             document.querySelector("button[onclick='pingBetweenServers()']").style.background = "#007bff";
+//         })
+//         .catch(err => {
+//             console.error(err);
+//             I("serverToServerMsg").textContent = "⚠️ Server-to-server test failed";
+//             I("serverToServerMsg").style.color = "orange";
+//             document.querySelector("button[onclick='pingBetweenServers()']").style.background = "#007bff";
+//         });
+// }
+
 function pingBetweenServers() {
     const serverA = SPEEDTEST_SERVERS[document.getElementById("serverA").value];
     const serverB = SPEEDTEST_SERVERS[document.getElementById("serverB").value];
 
     if (!serverA || !serverB) {
-        I("serverToServerMsg").textContent = "❌ Please select both servers.";
+        I("serverToServerMsg").innerHTML = "<span style='color:red; font-weight:bold;'>❌ Please select both servers.</span>";
         return;
     }
 
     // 🟡 Show loading state
-    I("serverToServerMsg").textContent = `⏳ Testing ${serverA.name} → ${serverB.name} ...`;
-    I("serverToServerMsg").style.color = "black";
+    I("serverToServerMsg").innerHTML = `<span style="color:black; font-size:16px; font-weight:bold;">⏳ Testing ${serverA.name} → ${serverB.name} ...</span>`;
+ 	// fetch(`http://103.189.178.121/streamserver/backend/ping_server_to_server.php?to=${encodeURIComponent(getServerIp(serverB.server))}`)
 
-    // fetch(`/backend/ping_server_to_server.php?from=${getServerIp(serverA.server)}&to=${getServerIp(serverB.server)}`)
-	fetch(`http://103.189.178.121/streamserver/backend/ping_server_to_server.php?to=${encodeURIComponent(getServerIp(serverB.server))}`)
-
+    fetch(`/backend/ping_server_to_server.php?from=${getServerIp(serverA.server)}&to=${getServerIp(serverB.server)}`)
         .then(res => res.json())
         .then(data => {
             if (data.status === "ok") {
-                I("serverToServerMsg").textContent = `✅ ${serverA.name} → ${serverB.name} tested successfully`;
-                I("serverToServerMsg").style.color = "green";
+                // ✅ Success message
+                I("serverToServerMsg").innerHTML = `<span style="color:navy; font-size:18px; font-weight:bold;">✅ ${serverA.name} → ${serverB.name} tested successfully</span>`;
 
                 // Reset placeholders
                 I("pingText").textContent = "-";
@@ -1807,7 +1885,7 @@ function pingBetweenServers() {
                     }
                 }, 2000);
 
-                // ✅ Populate Share Results Area (basic info immediately)
+                // ✅ Populate Share Results Area
                 let testId = generateUUID();
                 I("testId").textContent = testId;
                 I("serverUsed").textContent = `${serverA.name} → ${serverB.name}`;
@@ -1815,20 +1893,26 @@ function pingBetweenServers() {
                 I("shareDateTime").textContent = new Date().toLocaleString();
                 I("shareArea").style.display = "";
 
+                // ⚠️ Check if results are all missing
+                if (!data.ping_ms && !data.jitter_ms && !data.download_mbps && !data.upload_mbps) {
+                    I("serverToServerMsg").innerHTML = `<span style="color:orange; font-weight:bold;">⚠️ Test completed but no valid results received.</span>`;
+                }
+
             } else {
-                I("serverToServerMsg").textContent = `❌ ${serverA.name} → ${serverB.name} unreachable`;
-                I("serverToServerMsg").style.color = "red";
+                // ❌ Server unreachable or down
+                I("serverToServerMsg").innerHTML = `<span style="color:red; font-size:16px; font-weight:bold;">❌ Connection Failed or Server Down. Try another server.</span>`;
             }
 
             document.querySelector("button[onclick='pingBetweenServers()']").style.background = "#007bff";
         })
         .catch(err => {
             console.error(err);
-            I("serverToServerMsg").textContent = "⚠️ Server-to-server test failed";
-            I("serverToServerMsg").style.color = "orange";
+            // ❌ Network/Backend error
+            I("serverToServerMsg").innerHTML = "<span style='color:red; font-size:16px; font-weight:bold;'>❌ Connection Failed or Server Down. Try another server.</span>";
             document.querySelector("button[onclick='pingBetweenServers()']").style.background = "#007bff";
         });
 }
+
 
 function getEffectiveServer(originalServer) {
   return originalServer;
@@ -2032,6 +2116,28 @@ function initServers(){
 }
 
 
+// function checkAllZeroAfterTest() {
+//     setTimeout(() => {
+//         const pingValue = parseFloat(document.getElementById("pingText").textContent) || 0;
+//         const jitterValue = parseFloat(document.getElementById("jitText").textContent) || 0;
+//         const dlValue = parseFloat(document.getElementById("dlText").textContent) || 0;
+//         const ulValue = parseFloat(document.getElementById("ulText").textContent) || 0;
+
+//         if (pingValue === 0 && jitterValue === 0 && dlValue === 0 && ulValue === 0) {
+//             const errEl = document.getElementById("errorMessage");
+//             errEl.textContent = "❌ Connection Failed or Server Down. Try another server.";
+//             errEl.style.display = "block";
+
+//             // 5 seconds taruvata error hide + reset
+//             setTimeout(() => {
+//                 errEl.style.display = "none";
+//                 resetTestState();
+//             }, 5000);
+//         }
+//     }, 5000); 
+// }
+
+
 function checkAllZeroAfterTest() {
     setTimeout(() => {
         const pingValue = parseFloat(document.getElementById("pingText").textContent) || 0;
@@ -2043,6 +2149,9 @@ function checkAllZeroAfterTest() {
             const errEl = document.getElementById("errorMessage");
             errEl.textContent = "❌ Connection Failed or Server Down. Try another server.";
             errEl.style.display = "block";
+            errEl.style.color = "red";
+            errEl.style.fontSize = "18px";
+            errEl.style.fontWeight = "bold";
 
             // 5 seconds taruvata error hide + reset
             setTimeout(() => {
@@ -2125,9 +2234,9 @@ function onServerChange() {
 }
 
 
-var meterBk=/Trident.*rv:(\d+\.\d+)/i.test(navigator.userAgent)?"#EAEAEA":"#80808040";
-var dlColor="#6060AA",
-  ulColor="#616161";
+var meterBk=/Trident.*rv:(\d+\.\d+)/i.test(navigator.userAgent)?"#EAEAEA":"#ffffff";
+var dlColor="#0d47a1";
+  ulColor="#0d47a1";
 var progColor=meterBk;
 
 //CODE FOR GAUGES
@@ -2381,13 +2490,6 @@ function initUI(){
 }
 </script>
 <style type="text/css">
-  /* html,body{
-    border:none; padding:0; margin:0;
-    background: #ae9393;
-        color: rgb(137, 107, 107);
-  } */
-
-
 
 body {
     font-family: Arial, sans-serif;
@@ -2412,7 +2514,7 @@ body {
   }
 
   h1 {
-    color: #090707; /* White color */
+    color: #f7f7fb; /* White color */
     font-size: 2em; /* Larger text */
     font-weight: bold; /* Bold text */
     text-transform: uppercase; /* Uppercase text */
@@ -2509,13 +2611,13 @@ body {
   width: 100%;
   font-size: 1.4em;
   z-index: 9;
-  color: rgb(8, 8, 8); /* ✅ Set text color to white */
+  color: #ffffff; /* ✅ White text */
   }
   div.testArea2 div.testName {
     display: block; /* ✅ Corrected from 'white' to 'block' */
     text-align: center;
     font-size: 1.4em;
-    color: rgb(10, 10, 10); /* ✅ Set text color to white */
+  color: #ffffff; /* ✅ White text */
   }
   div.testArea div.meterText {
   position: absolute;
@@ -2524,13 +2626,13 @@ body {
   width: 100%;
   font-size: 2.5em;
   z-index: 9;
-  color: rgb(10, 10, 10); /* ✅ Add this */
+  color: #ffffff; /* ✅ White text */
   }
 
   div.testArea2 div.meterText {
     display: inline-block;
     font-size: 2.5em;
-    color: rgb(10, 10, 10); /* ✅ Add this */
+   color: #ffffff; /* ✅ White text */
   }
 
   div.meterText:empty:before {
@@ -2542,11 +2644,11 @@ body {
     bottom:2em; left:0;
     width:100%;
     z-index:9;
-    color: #0f0e0e;
+    color: #ffffff; /* ✅ White text */
   }
   div.testArea2 div.unit{
     display:inline-block;
-    color: #090808;
+    color: #ffffff; /* ✅ White text */
 
   }
   div.testArea canvas{
@@ -2567,7 +2669,7 @@ body {
   border: 2px solid #ee4f57;  /* red border */
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* subtle shadow */
-  color: #2e2e2e; /* dark text */
+  color: #f8f4f4; /* dark text */
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   transition: all 0.3s ease-in-out;
 }
@@ -2767,15 +2869,15 @@ body {
 
     <!-- ✅ Server-to-Server Ping Section -->
     <div id="serverToServerArea" style="margin-top:30px;">
-      <h3 style="font-size:22px; font-weight:bold; color:black; margin-bottom:15px;">
+      <h3 style="font-size:22px; font-weight:bold; color:rgb(243, 238, 238); margin-bottom:15px;">
         Server ↔ Server Ping
       </h3>
 
-      <label for="serverA" style="font-size:18px; font-weight:bold; color:black;">From:</label>
-      <select id="serverA" style="font-size:18px; padding:5px; margin-left:5px;"></select>
+      <label for="serverA" style="font-size:15px; font-weight:bold; color:rgb(245, 231, 231);">From:</label>
+      <select id="serverA" style="font-size:15px; padding:5px; margin-left:5px;"></select>
 
-      <label for="serverB" style="font-size:18px; font-weight:bold; color:black; margin-left:20px;">To:</label>
-      <select id="serverB" style="font-size:18px; padding:5px; margin-left:5px;"></select>
+      <label for="serverB" style="font-size:15px; font-weight:bold; color:rgb(220, 207, 207); margin-left:20px;">To:</label>
+      <select id="serverB" style="font-size:15px; padding:5px; margin-left:5px;"></select>
 
       <!-- <button 
         onclick="pingBetweenServers()" 
@@ -2799,12 +2901,12 @@ body {
     <div class="testGroup">
             <div class="testArea2">
         <div class="testName">Ping</div>
-        <div id="pingText" class="meterText" style="color:#AA6060"></div>
+        <div id="pingText" class="meterText" style="color:#ecdddd"></div>
         <div class="unit">ms</div>
       </div>
       <div class="testArea2">
         <div class="testName">Jitter</div>
-        <div id="jitText" class="meterText" style="color:#AA6060"></div>
+        <div id="jitText" class="meterText" style="color:#ecdddd"></div>
         <div class="unit">ms</div>
       </div>
     </div>
@@ -2849,7 +2951,7 @@ body {
     ">
       <h2>
         This tool helps you to check the current Network Status of the Streaming server assigned to your device.
-      <p>Use it to ensure your connection is stable for uninterrupted UlkaTV streaming.</p>
+      <p>Use it to ensure your connection is stable for uninterrupted StreamTv streaming.</p>
       </h2>
     </div>
   </div>
