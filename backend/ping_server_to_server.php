@@ -24,11 +24,13 @@ if (count($pings) > 0) {
 }
 
 // ----------------------
-// 🟢 DOWNLOAD Test (garbage.php)
+// 🟢 DOWNLOAD Test
 // ----------------------
-$downloadUrl = "http://$to/backend/garbage.php?ckSize=10"; // 10 MB test
+$downloadUrl = "http://{$to}/streamserver/backend/garbage.php?ckSize=10"; // ✅ FIXED PATH
 $start = microtime(true);
-$data = @file_get_contents($downloadUrl);
+$data = @file_get_contents($downloadUrl, false, stream_context_create([
+    "http" => ["timeout" => 10]
+]));
 $end = microtime(true);
 
 $downloadSpeed = 0;
@@ -41,16 +43,17 @@ if ($data !== false) {
 }
 
 // ----------------------
-// 🟢 UPLOAD Test (empty.php)
+// 🟢 UPLOAD Test
 // ----------------------
-$uploadUrl = "http://$to/backend/empty.php";
-$postData = str_repeat("0", 5 * 1024 * 1024); // 5MB dummy data
+$uploadUrl = "http://{$to}/streamserver/backend/empty.php"; // ✅ FIXED PATH
+$postData = str_repeat("0", 5 * 1024 * 1024); // 5MB dummy
 
 $start = microtime(true);
 $opts = ['http' => [
     'method'  => 'POST',
     'header'  => "Content-Type: application/octet-stream\r\n",
-    'content' => $postData
+    'content' => $postData,
+    'timeout' => 10
 ]];
 $context  = stream_context_create($opts);
 $result = @file_get_contents($uploadUrl, false, $context);
@@ -59,9 +62,9 @@ $end = microtime(true);
 $uploadSpeed = 0;
 if ($result !== false) {
     $size = strlen($postData) / (1024 * 1024); // MB
-    $time = $end - $start; // seconds
+    $time = $end - $start;
     if ($time > 0) {
-        $uploadSpeed = round($size / $time, 2); // MBps
+        $uploadSpeed = round($size / $time, 2);
     }
 }
 
@@ -72,8 +75,6 @@ echo json_encode([
     "status" => "ok",
     "ping_ms" => round($ping, 2),
     "jitter_ms" => round($jitter, 2),
-    "download_mbps" => round($downloadSpeed * 8, 2), // Convert MBps → Mbps
-    "upload_mbps"  => round($uploadSpeed * 8, 2)     // Convert MBps → Mbps
+    "download_mbps" => round($downloadSpeed * 8, 2), // MBps → Mbps
+    "upload_mbps"  => round($uploadSpeed * 8, 2)
 ]);
-
-?>

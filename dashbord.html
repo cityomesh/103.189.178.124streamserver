@@ -1715,6 +1715,7 @@ function initUI(){
 
 
 
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -1730,22 +1731,22 @@ function initUI(){
   };
   
 function testPing(targetIp) {
-   fetch("http://103.189.178.121/streamserver/ping_server_to_server.php?to=10.6.6.165")
+  // use full path to backend inside streamserver
+  fetch(`http://103.189.178.121/streamserver/backend/ping_server_to_server.php?to=${encodeURIComponent(targetIp)}`)
     .then(res => res.json())
     .then(data => {
       if (data.status === "ok") {
-        document.getElementById("message").textContent =
-          `✅ Ping to ${data.target}: ${data.avg_ms} ms`;
-        document.getElementById("message").style.color = "green";
+        I("message").textContent = `✅ Ping to ${targetIp}: ${data.ping_ms} ms`;
+        I("message").style.color = "green";
       } else {
-        document.getElementById("message").textContent =
-          `❌ ${data.target} unreachable`;
-        document.getElementById("message").style.color = "red";
+        I("message").textContent = `❌ ${targetIp} unreachable (${data.message || 'no details'})`;
+        I("message").style.color = "red";
       }
     })
     .catch(err => {
-      document.getElementById("message").textContent = "⚠️ Ping request failed";
-      document.getElementById("message").style.color = "orange";
+      I("message").textContent = "⚠️ Ping request failed";
+      I("message").style.color = "orange";
+      console.error("testPing error:", err);
     });
 }
 
@@ -1836,30 +1837,24 @@ const currentOrigin = window.location.origin;
 console.log("✅ Running from:", currentOrigin);
 
 function getServerIp(serverUrl) {
-  return serverUrl
+  let ip = serverUrl
     .replace("http://", "")
     .replace("https://", "")
-    .replace("//", "")
-    .replace(/\/$/, "");
+    .replace("//", "");
+
+  // Take only before first "/" → gives only IP
+  ip = ip.split("/")[0];
+
+  console.log("getServerIp(", serverUrl, ") ->", ip);
+  return ip;
 }
-
-
-// async function setInitialIp() {
-//   if (window.location.hostname === "localhost" || window.location.hostname === "103.189.178.121") {
-//     // Local development run
-//     I("ip").textContent = "localhost (127.0.0.1)";
-//   } else {
-//     // ✅ Production లో ఎప్పుడూ hosting server IP చూపించాలి
-//     I("ip").textContent = "103.189.178.121";  
-//   }
-// }
 
 
 async function setInitialIp() {
   if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
     I("ip").textContent = "localhost (127.0.0.1)";
   } else {
-    I("ip").textContent = "103.189.178.121";  
+    I("ip").textContent = "192.168.12.103";  
   }
 }
 
@@ -1873,17 +1868,18 @@ function generateUUID() {
 
 function I(i){return document.getElementById(i);}
 
+
 var SPEEDTEST_SERVERS = [
 
    {
-    name: "Main CDN Server",
-    server: "//103.189.178.121/",   // correct format
+    name: "Main CDN IP",
+    server: "//103.189.178.121/streamtv/",   // correct format
     dlURL: "backend/garbage.php",
     ulURL: "backend/empty.php",
     pingURL: "backend/empty.php",
     getIpURL: "backend/getIP.php"
   },
-       {
+    {
     name: "CDN DSN3",
     server: "//10.6.6.165/",
     dlURL: "backend/garbage.php",
@@ -1963,53 +1959,53 @@ s.setParameter("telemetry_level","basic"); //enable basic telemetry (for results
 
 
 function initServers(){
-	if (SPEEDTEST_SERVERS.length == 0) {
-		I("loading").className = "hidden";
-		I("serverArea").style.display = "none";
-		I("testWrapper").className = "visible";
-		initUI();
-	} else {
-		var noServersAvailable = function () {
-		 I("message").innerHTML = "No servers available";
-		}
+  if (SPEEDTEST_SERVERS.length == 0) {
+    I("loading").className = "hidden";
+    I("serverArea").style.display = "none";
+    I("testWrapper").className = "visible";
+    initUI();
+  } else {
+    var noServersAvailable = function () {
+     I("message").innerHTML = "No servers available";
+    }
 
-		var runServerSelect = function () {
-		const preferredIndex = 0; // ✅ Always pick Main CDN Server first
-		const selectedServer = SPEEDTEST_SERVERS[preferredIndex];
+    var runServerSelect = function () {
+    const preferredIndex = 0; // ✅ Always pick Main CDN Server first
+    const selectedServer = SPEEDTEST_SERVERS[preferredIndex];
 
-		// Set the server manually without selectServer() ping logic
-		s.setSelectedServer(selectedServer);
-		I("loading").className = "hidden";
+    // Set the server manually without selectServer() ping logic
+    s.setSelectedServer(selectedServer);
+    I("loading").className = "hidden";
 
-		// populate dropdown
-		for (var i = 0; i < SPEEDTEST_SERVERS.length; i++) {
-		// ✅ Only for main client-server dropdown
-		var option = document.createElement("option");
-		option.value = i;
-		option.textContent = SPEEDTEST_SERVERS[i].name;
-		if (i === preferredIndex) option.selected = true;
-		I("server").appendChild(option);
+    // populate dropdown
+    for (var i = 0; i < SPEEDTEST_SERVERS.length; i++) {
+    // ✅ Only for main client-server dropdown
+    var option = document.createElement("option");
+    option.value = i;
+    option.textContent = SPEEDTEST_SERVERS[i].name;
+    if (i === preferredIndex) option.selected = true;
+    I("server").appendChild(option);
 
-		// ✅ Also fill Server-to-Server dropdowns
-		var optA = document.createElement("option");
-		optA.value = i;
-		optA.textContent = SPEEDTEST_SERVERS[i].name;
-		I("serverA").appendChild(optA);
+    // ✅ Also fill Server-to-Server dropdowns
+    var optA = document.createElement("option");
+    optA.value = i;
+    optA.textContent = SPEEDTEST_SERVERS[i].name;
+    I("serverA").appendChild(optA);
 
-		var optB = document.createElement("option");
-		optB.value = i;
-		optB.textContent = SPEEDTEST_SERVERS[i].name;
-		I("serverB").appendChild(optB);
-	}
+    var optB = document.createElement("option");
+    optB.value = i;
+    optB.textContent = SPEEDTEST_SERVERS[i].name;
+    I("serverB").appendChild(optB);
+  }
 
 
-	// Set ping result initially
-	onServerChange();
+  // Set ping result initially
+  onServerChange();
 
-	// Show test UI
-	I("testWrapper").className = "visible";
-	initUI();
-	}
+  // Show test UI
+  I("testWrapper").className = "visible";
+  initUI();
+  }
 
     if (typeof SPEEDTEST_SERVERS === "string") {
       s.loadServerList(SPEEDTEST_SERVERS, function (servers) {
@@ -2051,15 +2047,14 @@ function checkAllZeroAfterTest() {
 
 
 function checkClientPings() {
-  fetch("http://103.189.178.121/streamserver/backend/ping_clients.php")
-    .then(res => res.json())
-    .then(data => {
-      console.log("Client Ping Results:", data);
-      alert(JSON.stringify(data, null, 2));
-    })
-    .catch(err => console.error("Ping check failed:", err));
+    fetch("http://103.189.178.121/streamserver/backend/ping_clients.php?target=10.6.6.165")
+        .then(res => res.json())
+        .then(data => {
+            console.log("Client Ping Results:", data);
+            alert(JSON.stringify(data, null, 2));
+        })
+        .catch(err => console.error("Ping check failed:", err));
 }
-
 
 function resetTestState() {
     try { stopTest(); } catch(e) {}
@@ -2086,7 +2081,7 @@ function onServerChange() {
   const serverIp = getServerIp(selectedServer.server); // direct IP
 
   // Always hit Main CDN to check latency
-  const pingURL = `http://103.189.178.121/streamserver/backend/ping_server.php?target=${serverIp}&t=${Math.random()}`;
+  const pingURL = `http://103.189.178.121/streamserver/backend/ping_server.php?target=${encodeURIComponent(serverIp)}&t=${Math.random()}`;
 
   fetch(pingURL, { method: "GET", cache: "no-cache" })
     .then(res => res.json())
@@ -2124,38 +2119,38 @@ function onServerChange() {
 
 var meterBk=/Trident.*rv:(\d+\.\d+)/i.test(navigator.userAgent)?"#EAEAEA":"#80808040";
 var dlColor="#6060AA",
-	ulColor="#616161";
+  ulColor="#616161";
 var progColor=meterBk;
 
 //CODE FOR GAUGES
 function drawMeter(c,amount,bk,fg,progress,prog){
-	var ctx=c.getContext("2d");
-	var dp=window.devicePixelRatio||1;
-	var cw=c.clientWidth*dp, ch=c.clientHeight*dp;
-	var sizScale=ch*0.0055;
-	if(c.width==cw&&c.height==ch){
-		ctx.clearRect(0,0,cw,ch);
-	}else{
-		c.width=cw;
-		c.height=ch;
-	}
-	ctx.beginPath();
-	ctx.strokeStyle=bk;
-	ctx.lineWidth=12*sizScale;
-	ctx.arc(c.width/2,c.height-58*sizScale,c.height/1.8-ctx.lineWidth,-Math.PI*1.1,Math.PI*0.1);
-	ctx.stroke();
-	ctx.beginPath();
-	ctx.strokeStyle=fg;
-	ctx.lineWidth=12*sizScale;
-	ctx.arc(c.width/2,c.height-58*sizScale,c.height/1.8-ctx.lineWidth,-Math.PI*1.1,amount*Math.PI*1.2-Math.PI*1.1);
-	ctx.stroke();
-	if(typeof progress !== "undefined"){
-		ctx.fillStyle=prog;
-		ctx.fillRect(c.width*0.3,c.height-16*sizScale,c.width*0.4*progress,4*sizScale);
-	}
+  var ctx=c.getContext("2d");
+  var dp=window.devicePixelRatio||1;
+  var cw=c.clientWidth*dp, ch=c.clientHeight*dp;
+  var sizScale=ch*0.0055;
+  if(c.width==cw&&c.height==ch){
+    ctx.clearRect(0,0,cw,ch);
+  }else{
+    c.width=cw;
+    c.height=ch;
+  }
+  ctx.beginPath();
+  ctx.strokeStyle=bk;
+  ctx.lineWidth=12*sizScale;
+  ctx.arc(c.width/2,c.height-58*sizScale,c.height/1.8-ctx.lineWidth,-Math.PI*1.1,Math.PI*0.1);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.strokeStyle=fg;
+  ctx.lineWidth=12*sizScale;
+  ctx.arc(c.width/2,c.height-58*sizScale,c.height/1.8-ctx.lineWidth,-Math.PI*1.1,amount*Math.PI*1.2-Math.PI*1.1);
+  ctx.stroke();
+  if(typeof progress !== "undefined"){
+    ctx.fillStyle=prog;
+    ctx.fillRect(c.width*0.3,c.height-16*sizScale,c.width*0.4*progress,4*sizScale);
+  }
 }
 function mbpsToAmount(s){
-	return 1-(1/(Math.pow(1.3,Math.sqrt(s))));
+  return 1-(1/(Math.pow(1.3,Math.sqrt(s))));
 }
 function format(d){
     d=Number(d);
@@ -2192,137 +2187,148 @@ function startStop() {
         };
 
         s.onend = async function (aborted) {
-			console.log("Test Ended", aborted, uiData);
+      console.log("Test Ended", aborted, uiData);
 
-			I("startStopBtn").className = "";
-			I("server").disabled = false;
-			updateUI(true);
+      I("startStopBtn").className = "";
+      I("server").disabled = false;
+      updateUI(true);
 
-			if (!aborted && (!uiData || !uiData.dlStatus)) {
-				I("message").textContent = "❌ Server Down — Please select another server.";
-				I("message").style.color = "red";
-				I("shareArea").style.display = "none";
-				return;
-			}
+      if (!aborted && (!uiData || !uiData.dlStatus)) {
+        I("message").textContent = "❌ Server Down — Please select another server.";
+        I("message").style.color = "red";
+        I("shareArea").style.display = "none";
+        return;
+      }
 
-			if (!aborted) {
-				let testId, ip, ping, jitter, download, upload, selectedServer;
+      if (!aborted) {
+        let testId, ip, ping, jitter, download, upload, selectedServer;
 
-				try {
-					testId = uiData.testId || generateUUID();
-					ping = format(uiData.pingStatus || 0);
-					jitter = format(uiData.jitterStatus || 0);
-					download = format(uiData.dlStatus || 0);
-					upload = format(uiData.ulStatus || 0);
-					selectedServer = s.getSelectedServer();
+        try {
+          testId = uiData.testId || generateUUID();
+          ping = format(uiData.pingStatus || 0);
+          jitter = format(uiData.jitterStatus || 0);
+          download = format(uiData.dlStatus || 0);
+          upload = format(uiData.ulStatus || 0);
+          selectedServer = s.getSelectedServer();
 
-					// ✅ Server IP instead of client IP
-					ip = selectedServer.server.replace("http://", "").replace("https://", "").replace(/\/$/, "");
+          // ✅ Server IP instead of client IP
+          ip = selectedServer.server.replace("http://", "").replace("https://", "").replace(/\/$/, "");
 
-					// 🟢 Local vs Server check
-					let hostUsed = "";
-					if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-						hostUsed = "http://localhost/";
-					} else {
-						hostUsed = window.location.origin + "/";
-					}
+          // 🟢 Local vs Server check
+          let hostUsed = "";
+          if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+            hostUsed = "http://localhost/";
+          } else {
+            hostUsed = window.location.origin + "/";
+          }
 
-					// UI Display
-					if (testId && testId !== "N/A") {
-						I("testId").textContent = testId;
-					} else {
-						I("testId").parentElement.style.display = "none";
-					}
+          // UI Display
+          if (testId && testId !== "N/A") {
+            I("testId").textContent = testId;
+          } else {
+            I("testId").parentElement.style.display = "none";
+          }
 
-					if (selectedServer) {
-						I("serverUsed").textContent =
-							hostUsed + " → " + selectedServer.name;
-					}
+          if (selectedServer) {
+            I("serverUsed").textContent =
+              hostUsed + " → " + selectedServer.name;
+          }
 
-					I("shareIp").textContent = ip;
-					I("sharePing").textContent = ping;
-					I("shareJitter").textContent = jitter;
-					I("shareDownload").textContent = download;
-					I("shareUpload").textContent = upload;
+          I("shareIp").textContent = ip;
+          I("sharePing").textContent = ping;
+          I("shareJitter").textContent = jitter;
+          I("shareDownload").textContent = download;
+          I("shareUpload").textContent = upload;
 
-					const now = new Date();
-					I("shareDateTime").textContent = now.toLocaleString();
+          const now = new Date();
+          I("shareDateTime").textContent = now.toLocaleString();
 
-					I("shareArea").style.display = "";
-				} catch (e) {
-					console.error("Error populating share area:", e);
-					return;
-				}
+          I("shareArea").style.display = "";
+        } catch (e) {
+          console.error("Error populating share area:", e);
+          return;
+        }
 
-				// ✅ API call remains same
-				const payload = {
-					test_id: testId,
-					ip_address: ip,
-					ping,
-					jitter,
-					download_speed: download,
-					upload_speed: upload,
-					server: selectedServer?.name || "Unknown",
-					datetime: new Date().toISOString()
-				};
+        // ✅ API call remains same
+        const payload = {
+          test_id: testId,
+          ip_address: ip,
+          ping,
+          jitter,
+          download_speed: download,
+          upload_speed: upload,
+          server: selectedServer?.name || "Unknown",
+          datetime: new Date().toISOString()
+        };
 
-				// ✅ Save results to Main CDN server
-                fetch("http://103.189.178.121/streamserver/backend/save_results.php", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(payload)
-				})
-					.then((response) => response.json())
-					.then((data) => {
-						console.log("Results saved to server:", data);
-					})
-					.catch((error) => {
-						console.error("Saving results failed:", error);
-					});
+        // ✅ Save results to Main CDN server
+        fetch("http://103.189.178.121/streamserver/backend/save_results.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Results saved to server:", data);
+          })
+          .catch((error) => {
+            console.error("Saving results failed:", error);
+          });
 
-				// 🔥 EXTRA: Server-to-Server check
-				try {
-					const res = await fetch(
-						"http://103.189.178.121/streamserver/backend/ping_server_to_server.php?to=" + ip
-					);
-					const data = await res.json();
-					console.log("Server-to-server result:", data);
+        // 🔥 EXTRA: Server-to-Server check
+        try {
+          const res = await fetch(
+            "http://103.189.178.121/streamserver/backend/ping_server_to_server.php?to=" + ip
+          );
+          const data = await res.json();
+          console.log("Server-to-server result:", data);
 
-					if (data.status === "ok") {
-						// ✅ Update values from backend
-						I("sharePing").textContent = data.ping_ms + " ms";
-						I("shareJitter").textContent = data.jitter_ms + " ms";
-						I("shareDownload").textContent = data.download_mbps + " Mbps";
-						I("shareUpload").textContent = data.upload_mbps + " Mbps";
+          if (data.status === "ok") {
+            // ✅ Update values from backend
+            I("sharePing").textContent = data.ping_ms + " ms";
+            I("shareJitter").textContent = data.jitter_ms + " ms";
+            I("shareDownload").textContent = data.download_mbps + " Mbps";
+            I("shareUpload").textContent = data.upload_mbps + " Mbps";
 
-						// ✅ Merge into payload
-						payload.ping = data.ping_ms;
-						payload.jitter = data.jitter_ms;
-						payload.download_speed = data.download_mbps;
-						payload.upload_speed = data.upload_mbps;
-					}
+            // ✅ Merge into payload
+            payload.ping = data.ping_ms;
+            payload.jitter = data.jitter_ms;
+            payload.download_speed = data.download_mbps;
+            payload.upload_speed = data.upload_mbps;
+          }
 
-					// ✅ Re-save with server-to-server results
-					fetch("http://103.189.178.121/streamserver/backend/save_results.php", {
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify(payload)
-					})
-						.then((response) => response.json())
-						.then((data) => {
-							console.log("Updated results with server-to-server:", data);
-						})
-						.catch((error) => {
-							console.error("Re-saving results failed:", error);
-						});
+          // ✅ Re-save with server-to-server results
+          fetch("http://103.189.178.121/streamserver/backend/save_results.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              console.log("Updated results with server-to-server:", data);
+            })
+            .catch((error) => {
+              console.error("Re-saving results failed:", error);
+            });
 
-				} catch (err) {
-					console.error("Server-to-server fetch failed:", err);
-				}
-			}
-		};
+        } catch (err) {
+          console.error("Server-to-server fetch failed:", err);
+        }
+      }
+    };
 
+	function getServerIp(serverUrl) {
+		let ip = serverUrl
+			.replace("http://", "")
+			.replace("https://", "")
+			.replace("//", "");
 
+		// Take only before first "/" → gives only IP
+		ip = ip.split("/")[0];
+
+		console.log("getServerIp(", serverUrl, ") ->", ip);
+		return ip;
+	}
         s.start();
         checkAllZeroAfterTest();
     }
@@ -2331,102 +2337,90 @@ function startStop() {
 
 //this function reads the data sent back by the test and updates the UI
 function updateUI(forced){
-	if(!forced && s.getState()!=3) return;
-	if(uiData==null) return;
-	var status=uiData.testState;
+  if(!forced && s.getState()!=3) return;
+  if(uiData==null) return;
+  var status=uiData.testState;
 
-	// ✅ Always show server IP instead of client IP
-	// let selectedServer = s.getSelectedServer();
-	// if (selectedServer) {
-	// 	let serverIp = selectedServer.server
-	// 		.replace("http://", "")
-	// 		.replace("https://", "")
-	// 		.replace(/\/$/, "");
-	// 	I("ip").textContent = serverIp;
-	// } else {
-	// 	I("ip").textContent = "N/A";
-	// }
+  I("dlText").textContent = (status==1 && uiData.dlStatus==0) ? "..." : format(uiData.dlStatus);
+  drawMeter(I("dlMeter"), mbpsToAmount(Number(uiData.dlStatus*(status==1?oscillate():1))), meterBk, dlColor, Number(uiData.dlProgress), progColor);
 
-	I("dlText").textContent = (status==1 && uiData.dlStatus==0) ? "..." : format(uiData.dlStatus);
-	drawMeter(I("dlMeter"), mbpsToAmount(Number(uiData.dlStatus*(status==1?oscillate():1))), meterBk, dlColor, Number(uiData.dlProgress), progColor);
+  I("ulText").textContent = (status==3 && uiData.ulStatus==0) ? "..." : format(uiData.ulStatus);
+  drawMeter(I("ulMeter"), mbpsToAmount(Number(uiData.dlStatus*(status==3?oscillate():1))), meterBk, dlColor, Number(uiData.dlProgress), progColor);
 
-	I("ulText").textContent = (status==3 && uiData.ulStatus==0) ? "..." : format(uiData.ulStatus);
-	drawMeter(I("ulMeter"), mbpsToAmount(Number(uiData.dlStatus*(status==3?oscillate():1))), meterBk, dlColor, Number(uiData.dlProgress), progColor);
-
-	I("pingText").textContent = format(uiData.pingStatus);
-	I("jitText").textContent = format(uiData.jitterStatus);
+  I("pingText").textContent = format(uiData.pingStatus);
+  I("jitText").textContent = format(uiData.jitterStatus);
 }
 
 function oscillate(){
-	return 1+0.02*Math.sin(Date.now()/100);
+  return 1+0.02*Math.sin(Date.now()/100);
 }
 //update the UI every frame
 window.requestAnimationFrame=window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||window.msRequestAnimationFrame||(function(callback,element){setTimeout(callback,1000/60);});
 function frame(){
-	requestAnimationFrame(frame);
-	updateUI();
+  requestAnimationFrame(frame);
+  updateUI();
 }
 frame(); //start frame loop
 //function to (re)initialize UI
 function initUI(){
-	drawMeter(I("dlMeter"),0,meterBk,dlColor,0);
-	drawMeter(I("ulMeter"),0,meterBk,ulColor,0);
-	I("dlText").textContent="";
-	I("ulText").textContent="";
-	I("pingText").textContent="";
-	I("jitText").textContent="";
-	I("ip").textContent="";
+  drawMeter(I("dlMeter"),0,meterBk,dlColor,0);
+  drawMeter(I("ulMeter"),0,meterBk,ulColor,0);
+  I("dlText").textContent="";
+  I("ulText").textContent="";
+  I("pingText").textContent="";
+  I("jitText").textContent="";
+  I("ip").textContent="";
 }
 </script>
 <style type="text/css">
-	html,body{
-		border:none; padding:0; margin:0;
-		background: #f3ecec;
-        color: white;
-	}
-	body{
-		text-align:center;
-		font-family:"Roboto",sans-serif;
-	}
-	h1{
-		color:#404040;
-	}
-	#loading{
-		background-color:#FFFFFF;
-		color:#404040;
-		text-align:center;
-	}
+  html,body{
+    border:none; padding:0; margin:0;
+    background: #ae9393;
+        color: rgb(137, 107, 107);
+  }
+  body{
+    text-align:center;
+    font-family:"Roboto",sans-serif;
+  }
+  h1{
+    color:#404040;
+  }
+  #loading{
+    background-color:#FFFFFF;
+    color:#404040;
+    text-align:center;
+  }
 
-	h1 {
-		color: #090707; /* White color */
-		font-size: 2em; /* Larger text */
-		font-weight: bold; /* Bold text */
-		text-transform: uppercase; /* Uppercase text */
-		text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.5); /* Shadow effect */
-	}
+  h1 {
+    color: #090707; /* White color */
+    font-size: 2em; /* Larger text */
+    font-weight: bold; /* Bold text */
+    text-transform: uppercase; /* Uppercase text */
+    text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.5); /* Shadow effect */
+  }
 
-	h2 {
-		color: #070707; /* White color */
-		font-size: 0.80em; /* Larger text */
-		font-weight: bold; /* Bold text */
-		text-transform: uppercase; /* Uppercase text */
-		text-shadow: 3px 3px 5px rgba(21, 15, 15, 0.5); /* Shadow effect */
-	}
-	span.loadCircle{
-		display:inline-block;
-		width:2em;
-		height:2em;
-		vertical-align:middle;
-		background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAP1BMVEUAAAB2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZyFzwnAAAAFHRSTlMAEvRFvX406baecwbf0casimhSHyiwmqgAAADpSURBVHja7dbJbQMxAENRahnN5lkc//5rDRAkDeRgHszXgACJoKiIiIiIiIiIiIiIiIiIiIj4HHspsrpAVhdVVguzrA4OWc10WcEqpwKbnBo0OU1Q5NSpsoJFTgOecrrdEag85DRgktNqfoEdTjnd7hrEHMEJvmRUYJbTYk5Agy6nau6Abp5Cm7mDBtRdPi9gyKdU7w4p1fsLvyqs8hl4z9/w3n/Hmr9WoQ65lAU4d7lMYOz//QboRR5jBZibLMZdAR6O/Vfa1PlxNr3XdS3HzK/HVPRu/KnLs8iAOh993VpRRERERMT/fAN60wwWaVyWwAAAAABJRU5ErkJggg==');
-		background-size:2em 2em;
-		margin-right:0.5em;
-		animation: spin 0.6s linear infinite;
-	}
-	@keyframes spin{
-		0%{transform:rotate(0deg);}
-		100%{transform:rotate(359deg);}
-	}
-	#startStopBtn{
+  h2 {
+    color: #070707; /* White color */
+    font-size: 0.80em; /* Larger text */
+    font-weight: bold; /* Bold text */
+    text-transform: uppercase; /* Uppercase text */
+    text-shadow: 3px 3px 5px rgba(21, 15, 15, 0.5); /* Shadow effect */
+  }
+  span.loadCircle{
+    display:inline-block;
+    width:2em;
+    height:2em;
+    vertical-align:middle;
+    background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAP1BMVEUAAAB2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZyFzwnAAAAFHRSTlMAEvRFvX406baecwbf0casimhSHyiwmqgAAADpSURBVHja7dbJbQMxAENRahnN5lkc//5rDRAkDeRgHszXgACJoKiIiIiIiIiIiIiIiIiIiIj4HHspsrpAVhdVVguzrA4OWc10WcEqpwKbnBo0OU1Q5NSpsoJFTgOecrrdEag85DRgktNqfoEdTjnd7hrEHMEJvmRUYJbTYk5Agy6nau6Abp5Cm7mDBtRdPi9gyKdU7w4p1fsLvyqs8hl4z9/w3n/Hmr9WoQ65lAU4d7lMYOz//QboRR5jBZibLMZdAR6O/Vfa1PlxNr3XdS3HzK/HVPRu/KnLs8iAOh993VpRRERERMT/fAN60wwWaVyWwAAAAABJRU5ErkJggg==');
+    background-size:2em 2em;
+    margin-right:0.5em;
+    animation: spin 0.6s linear infinite;
+  }
+  @keyframes spin{
+    0%{transform:rotate(0deg);}
+    100%{transform:rotate(359deg);}
+  }
+  #startStopBtn{
     display:inline-block;
     color:#fdf7f7;
     background-color:#ee4f57;
@@ -2454,154 +2448,154 @@ function initUI(){
     content:"Abort";
 
 
-	}
-	
-	#serverArea{
-		margin-top:1em;
-		color: #0b0b0b;
-		font-size:1.4em;
-	}
-	#server{
-		font-size:1em;
-		padding:0.2em;
-	}
-	#test{
-		margin-top:2em;
-		margin-bottom:12em;
-	}
-	#ipArea {
-    color: rgb(69, 107, 231);
-	font-size: 1.4em;
   }
-	div.testArea{
-		display:inline-block;
-		width:16em;
-		height:12.5em;
-		position:relative;
-		box-sizing:border-box;
-	}
-	div.testArea2{
-		display:inline-block;
-		width:14em;
-		height:7em;
-		position:relative;
-		box-sizing:border-box;
-		text-align:center;
-	}
-	div.testArea div.testName {
-	position: absolute;
-	top: 0.1em;
-	left: 0;
-	width: 100%;
-	font-size: 1.4em;
-	z-index: 9;
-	color: rgb(8, 8, 8); /* ✅ Set text color to white */
-	}
-	div.testArea2 div.testName {
-		display: block; /* ✅ Corrected from 'white' to 'block' */
-		text-align: center;
-		font-size: 1.4em;
-		color: rgb(10, 10, 10); /* ✅ Set text color to white */
-	}
-	div.testArea div.meterText {
-	position: absolute;
-	bottom: 1.55em;
-	left: 0;
-	width: 100%;
-	font-size: 2.5em;
-	z-index: 9;
-	color: rgb(53, 50, 235); /* ✅ Add this */
-	}
+  
+  #serverArea{
+    margin-top:1em;
+    color: #0b0b0b;
+    font-size:1.4em;
+  }
+  #server{
+    font-size:1em;
+    padding:0.2em;
+  }
+  #test{
+    margin-top:2em;
+    margin-bottom:12em;
+  }
+  #ipArea {
+    color: rgb(69, 107, 231);
+  font-size: 1.4em;
+  }
+  div.testArea{
+    display:inline-block;
+    width:16em;
+    height:12.5em;
+    position:relative;
+    box-sizing:border-box;
+  }
+  div.testArea2{
+    display:inline-block;
+    width:14em;
+    height:7em;
+    position:relative;
+    box-sizing:border-box;
+    text-align:center;
+  }
+  div.testArea div.testName {
+  position: absolute;
+  top: 0.1em;
+  left: 0;
+  width: 100%;
+  font-size: 1.4em;
+  z-index: 9;
+  color: rgb(8, 8, 8); /* ✅ Set text color to white */
+  }
+  div.testArea2 div.testName {
+    display: block; /* ✅ Corrected from 'white' to 'block' */
+    text-align: center;
+    font-size: 1.4em;
+    color: rgb(10, 10, 10); /* ✅ Set text color to white */
+  }
+  div.testArea div.meterText {
+  position: absolute;
+  bottom: 1.55em;
+  left: 0;
+  width: 100%;
+  font-size: 2.5em;
+  z-index: 9;
+  color: rgb(53, 50, 235); /* ✅ Add this */
+  }
 
-	div.testArea2 div.meterText {
-		display: inline-block;
-		font-size: 2.5em;
-		color: rgb(63, 47, 236); /* ✅ Add this */
-	}
+  div.testArea2 div.meterText {
+    display: inline-block;
+    font-size: 2.5em;
+    color: rgb(63, 47, 236); /* ✅ Add this */
+  }
 
-	div.meterText:empty:before {
-		content: "0.00";
-	}
+  div.meterText:empty:before {
+    content: "0.00";
+  }
 
-	div.testArea div.unit{
-		position:absolute;
-		bottom:2em; left:0;
-		width:100%;
-		z-index:9;
-		color: #0f0e0e;
-	}
-	div.testArea2 div.unit{
-		display:inline-block;
-		color: #090808;
+  div.testArea div.unit{
+    position:absolute;
+    bottom:2em; left:0;
+    width:100%;
+    z-index:9;
+    color: #0f0e0e;
+  }
+  div.testArea2 div.unit{
+    display:inline-block;
+    color: #090808;
 
-	}
-	div.testArea canvas{
-		position:absolute;
-		top:0; left:0; width:100%; height:100%;
-		z-index:1;
-	}
-	div.testGroup{
-		display:block;
+  }
+  div.testArea canvas{
+    position:absolute;
+    top:0; left:0; width:100%; height:100%;
+    z-index:1;
+  }
+  div.testGroup{
+    display:block;
         margin: 0 auto;
-	}
-	#shareArea {
-	width: 95%;
-	max-width: 40em;
-	margin: 2em auto;
-	padding: 1.5em;
-	background-color: #fdf9f9; /* light background */
-	border: 2px solid #ee4f57;  /* red border */
-	border-radius: 12px;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* subtle shadow */
-	color: #2e2e2e; /* dark text */
-	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-	transition: all 0.3s ease-in-out;
+  }
+  #shareArea {
+  width: 95%;
+  max-width: 40em;
+  margin: 2em auto;
+  padding: 1.5em;
+  background-color: #fdf9f9; /* light background */
+  border: 2px solid #ee4f57;  /* red border */
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* subtle shadow */
+  color: #2e2e2e; /* dark text */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  transition: all 0.3s ease-in-out;
 }
 
 #shareArea > * {
-	display: block;
-	width: 100%;
-	height: auto;
-	margin: 0.5em 0;
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0.5em 0;
 }
 
 #shareArea h3 {
-	color: #ee4f57; /* headline color */
-	font-size: 1.5em;
-	margin-bottom: 1em;
-	text-align: center;
-	border-bottom: 2px dashed #ee4f57;
-	padding-bottom: 0.5em;
+  color: #ee4f57; /* headline color */
+  font-size: 1.5em;
+  margin-bottom: 1em;
+  text-align: center;
+  border-bottom: 2px dashed #ee4f57;
+  padding-bottom: 0.5em;
 }
 
 #shareArea p {
-	font-size: 1.1em;
-	color: #333;
-	line-height: 1.4;
+  font-size: 1.1em;
+  color: #333;
+  line-height: 1.4;
 }
 
 #shareArea span {
-	font-weight: 600;
-	color: #0d47a1; /* dark blue for values */
+  font-weight: 600;
+  color: #0d47a1; /* dark blue for values */
 }
 
 #resultsURL {
-	padding: 0.5em;
-	border: 1px solid #ccc;
-	border-radius: 8px;
-	font-size: 1em;
-	color: #222;
-	background-color: #fff;
+  padding: 0.5em;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1em;
+  color: #222;
+  background-color: #fff;
 }
 
 #resultsImg {
-	margin-top: 1em;
-	max-width: 100%;
-	border: 1px solid #ddd;
-	border-radius: 8px;
+  margin-top: 1em;
+  max-width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 8px;
 }
 
-	#privacyPolicy{
+  #privacyPolicy{
         position:fixed;
         top:2em;
         bottom:2em;
@@ -2615,13 +2609,13 @@ function initUI(){
         text-align:left;
         background-color:#FFFFFF;
         padding:1em;
-	}
-	a.privacy{
+  }
+  a.privacy{
         text-align:center;
         font-size:0.8em;
         color:#808080;
         padding: 0 3em;
-	}
+  }
     div.closePrivacyPolicy {
         width: 100%;
         text-align: center;
@@ -2629,56 +2623,56 @@ function initUI(){
     div.closePrivacyPolicy a.privacy {
         padding: 1em 3em;
     }
-	@media all and (max-width:40em){
-		body{
-			font-size:0.8em;
-		}
-	}
-	div.visible{
-		animation: fadeIn 0.4s;
-		display:block;
-	}
-	div.hidden{
-		animation: fadeOut 0.4s;
-		display:none;
-	}
-	@keyframes fadeIn{
-		0%{
-			opacity:0;
-		}
-		100%{
-			opacity:1;
-		}
-	}
-	@keyframes fadeOut{
-		0%{
-			display:block;
-			opacity:1;
-		}
-		100%{
-			display:block;
-			opacity:0;
-		}
-	}
-	@media all and (prefers-color-scheme: dark){
-		html,body,#loading{
-			background:#202020;
-			color:#F4F4F4;
-			color-scheme:dark;
-		}
-		h1{
-			color:#E0E0E0;
-		}
-		a{
-			color:#9090FF;
-		}
-		#privacyPolicy{
-			background:#000000;
-		}
-		#resultsImg{
-			filter: invert(1);
-		}
-	}
+  @media all and (max-width:40em){
+    body{
+      font-size:0.8em;
+    }
+  }
+  div.visible{
+    animation: fadeIn 0.4s;
+    display:block;
+  }
+  div.hidden{
+    animation: fadeOut 0.4s;
+    display:none;
+  }
+  @keyframes fadeIn{
+    0%{
+      opacity:0;
+    }
+    100%{
+      opacity:1;
+    }
+  }
+  @keyframes fadeOut{
+    0%{
+      display:block;
+      opacity:1;
+    }
+    100%{
+      display:block;
+      opacity:0;
+    }
+  }
+  @media all and (prefers-color-scheme: dark){
+    html,body,#loading{
+      background:#202020;
+      color:#F4F4F4;
+      color-scheme:dark;
+    }
+    h1{
+      color:#E0E0E0;
+    }
+    a{
+      color:#9090FF;
+    }
+    #privacyPolicy{
+      background:#000000;
+    }
+    #resultsImg{
+      filter: invert(1);
+    }
+  }
 </style>
 <title>NetWork Diagnostics</title>
 </head>
@@ -2693,152 +2687,152 @@ function initUI(){
     }
   </script>
   
-	  <div style="width: 95%; display: flex; justify-content: flex-end; padding: 20px;">
-		<button onclick="logout()" style="
-			padding: 12px 24px;
-			font-size: 1.1rem;
-			background-color: #ee4f57;
-			color: white;
-			border: none;
-			border-radius: 8px;
-			cursor: pointer;
-			transition: background-color 0.3s ease;
-		">Logout</button>
-	  </div>
-	
-	  <script>
-		function checkLogin() {
-		  if (localStorage.getItem("loggedIn") !== "true") {
-			window.location.href = "index.html";
-		  } else {
-			document.getElementById("username").textContent =
-			  localStorage.getItem("username") || "User";
-		  }
-		}
+    <div style="width: 95%; display: flex; justify-content: flex-end; padding: 20px;">
+    <button onclick="logout()" style="
+      padding: 12px 24px;
+      font-size: 1.1rem;
+      background-color: #ee4f57;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    ">Logout</button>
+    </div>
   
-		function logout() {
-		  localStorage.clear();
-		  window.location.href = "index.html";
-		}
-	  </script>
-		
-	<div id="logo">
-		<img src="../ew.png" alt="ULKA TV Logo" style="height: 90px;"/>
-	</div>
-		
-	<h1>NetWork Diagnostics</h1>
-	<div id="loading" class="visible">
-		<p id="message"><span class="loadCircle"></span>Selecting a server...</p>
-	</div>
-	<div id="testWrapper" class="hidden">
-		<a class="privacy" href="#" onclick="I('privacyPolicy').style.display=''">Privacy</a>
+    <script>
+    function checkLogin() {
+      if (localStorage.getItem("loggedIn") !== "true") {
+      window.location.href = "index.html";
+      } else {
+      document.getElementById("username").textContent =
+        localStorage.getItem("username") || "User";
+      }
+    }
+  
+    function logout() {
+      localStorage.clear();
+      window.location.href = "index.html";
+    }
+    </script>
+    
+  <div id="logo">
+    <img src="removebg-preview.png" alt="ULKA TV Logo" style="height: 120px; width: 250px; margin-top: 30px;"/>
+  </div>
+    
+  <h1>NetWork Diagnostics</h1>
+  <div id="loading" class="visible">
+    <p id="message"><span class="loadCircle"></span>Selecting a server...</p>
+  </div>
+  <div id="testWrapper" class="hidden">
+    <a class="privacy" href="#" onclick="I('privacyPolicy').style.display=''">Privacy</a>
 
-		<!-- ✅ Flexbox container for Server + Start button (center aligned) -->
-		<div id="serverArea" 
-			style="display:flex; justify-content:center; align-items:center; gap:15px; margin-top:20px;">
-			
-			<label for="server" style="font-weight:bold;">Server:</label>
-			<select id="server" onchange="onServerChange()" style="padding:5px; font-size:14px;"></select>
+    <!-- ✅ Flexbox container for Server + Start button (center aligned) -->
+    <div id="serverArea" 
+      style="display:flex; justify-content:center; align-items:center; gap:15px; margin-top:20px;">
+      
+      <label for="server" style="font-weight:bold;">Local Server:</label>
+      <select id="server" onchange="onServerChange()" style="padding:5px; font-size:14px;"></select>
 
-			<!-- ✅ Start Button next to Server -->
-			<div id="startStopBtn" onclick="startStop()"></div>
-		</div>
+      <!-- ✅ Start Button next to Server -->
+      <div id="startStopBtn" onclick="startStop()"></div>
+    </div>
 
-		<div id="pingResult" style="color: rgb(207, 182, 182); margin-top: 5px; text-align:center;"></div> 
-		<div id="errorMessage" style="margin-top:15px; font-weight:bold; color:red; display:none; text-align:center;"></div>
-	</div>
-
-
-
-
-		<!-- ✅ Server-to-Server Ping Section -->
-		<div id="serverToServerArea" style="margin-top:30px;">
-			<h3 style="font-size:22px; font-weight:bold; color:black; margin-bottom:15px;">
-				Server ↔ Server Ping
-			</h3>
-
-			<label for="serverA" style="font-size:18px; font-weight:bold; color:black;">From:</label>
-			<select id="serverA" style="font-size:16px; padding:5px; margin-left:5px;"></select>
-
-			<label for="serverB" style="font-size:18px; font-weight:bold; color:black; margin-left:20px;">To:</label>
-			<select id="serverB" style="font-size:16px; padding:5px; margin-left:5px;"></select>
-
-			<!-- <button 
-				onclick="pingBetweenServers()" 
-				style="margin-left:20px; font-size:16px; padding:8px 15px; background:#f12d06; color:white; border:none; border-radius:6px; cursor:pointer;">
-				Ping Test
-			</button> -->
+    <div id="pingResult" style="color: rgb(207, 182, 182); margin-top: 5px; text-align:center;"></div> 
+    <div id="errorMessage" style="margin-top:15px; font-weight:bold; color:red; display:none; text-align:center;"></div>
+  </div>
 
 
-			<button 
-				onclick="pingBetweenServers()" 
-				style="margin-left:20px; font-size:16px; padding:8px 15px; background:#f12d06; color:white; border:none; border-radius:6px; cursor:pointer;">
-				Ping Test
-			</button>
 
-			<p id="serverToServerMsg" style="margin-top:15px; font-size:18px; font-weight:bold; color:black;"></p>
-		</div>
 
-	<!-- ✅ End New Section -->
+    <!-- ✅ Server-to-Server Ping Section -->
+    <div id="serverToServerArea" style="margin-top:30px;">
+      <h3 style="font-size:22px; font-weight:bold; color:black; margin-bottom:15px;">
+        Server ↔ Server Ping
+      </h3>
 
-	<div id="test">
-		<div class="testGroup">
+      <label for="serverA" style="font-size:18px; font-weight:bold; color:black;">From:</label>
+      <select id="serverA" style="font-size:16px; padding:5px; margin-left:5px;"></select>
+
+      <label for="serverB" style="font-size:18px; font-weight:bold; color:black; margin-left:20px;">To:</label>
+      <select id="serverB" style="font-size:16px; padding:5px; margin-left:5px;"></select>
+
+      <!-- <button 
+        onclick="pingBetweenServers()" 
+        style="margin-left:20px; font-size:16px; padding:8px 15px; background:#f12d06; color:white; border:none; border-radius:6px; cursor:pointer;">
+        Ping Test
+      </button> -->
+
+
+      <button 
+        onclick="pingBetweenServers()" 
+        style="margin-left:20px; font-size:16px; padding:8px 15px; background:#f12d06; color:white; border:none; border-radius:6px; cursor:pointer;">
+        Ping Test
+      </button>
+
+      <p id="serverToServerMsg" style="margin-top:15px; font-size:18px; font-weight:bold; color:black;"></p>
+    </div>
+
+  <!-- ✅ End New Section -->
+
+  <div id="test">
+    <div class="testGroup">
             <div class="testArea2">
-				<div class="testName">Ping</div>
-				<div id="pingText" class="meterText" style="color:#AA6060"></div>
-				<div class="unit">ms</div>
-			</div>
-			<div class="testArea2">
-				<div class="testName">Jitter</div>
-				<div id="jitText" class="meterText" style="color:#AA6060"></div>
-				<div class="unit">ms</div>
-			</div>
-		</div>
-		<div class="testGroup">
-			<div class="testArea">
-				<div class="testName">Download</div>
-				<canvas id="dlMeter" class="meter"></canvas>
-				<div id="dlText" class="meterText"></div>
-				<div class="unit">Mbit/s</div>
-			</div>
-			<div class="testArea">
-				<div class="testName">Upload</div>
-				<canvas id="ulMeter" class="meter"></canvas>
-				<div id="ulText" class="meterText"></div>
-				<div class="unit">Mbit/s</div>
-			</div>
-		</div>
-		<div id="ipArea">
-			<span id="ip"></span>
-		</div>
-		<div id="shareArea" style="display:none">
-			<h3>Results</h3>
-			<p><strong>Test ID:</strong> <span id="testId"></span></p>
-			<p><strong>Server Used:</strong> <span id="serverUsed"></span></p>
+        <div class="testName">Ping</div>
+        <div id="pingText" class="meterText" style="color:#AA6060"></div>
+        <div class="unit">ms</div>
+      </div>
+      <div class="testArea2">
+        <div class="testName">Jitter</div>
+        <div id="jitText" class="meterText" style="color:#AA6060"></div>
+        <div class="unit">ms</div>
+      </div>
+    </div>
+    <div class="testGroup">
+      <div class="testArea">
+        <div class="testName">Download</div>
+        <canvas id="dlMeter" class="meter"></canvas>
+        <div id="dlText" class="meterText"></div>
+        <div class="unit">Mbit/s</div>
+      </div>
+      <div class="testArea">
+        <div class="testName">Upload</div>
+        <canvas id="ulMeter" class="meter"></canvas>
+        <div id="ulText" class="meterText"></div>
+        <div class="unit">Mbit/s</div>
+      </div>
+    </div>
+    <div id="ipArea">
+      <span id="ip"></span>
+    </div>
+    <div id="shareArea" style="display:none">
+      <h3>Results</h3>
+      <p><strong>Test ID:</strong> <span id="testId"></span></p>
+      <p><strong>Server Used:</strong> <span id="serverUsed"></span></p>
 
-			<p><strong>IP Address:</strong> <span id="shareIp"></span></p>
-			<p><strong>Ping:</strong> <span id="sharePing"></span> ms</p>
-			<p><strong>Jitter:</strong> <span id="shareJitter"></span> ms</p>
-			<p><strong>Download Speed:</strong> <span id="shareDownload"></span> Mbps</p>
-			<p><strong>Upload Speed:</strong> <span id="shareUpload"></span> Mbps</p>
-		    <p><strong>Date &amp; Time:</strong> <span id="shareDateTime"></span></p>
-		</div>
-	</div>
+      <p><strong>IP Address:</strong> <span id="shareIp"></span></p>
+      <p><strong>Ping:</strong> <span id="sharePing"></span> ms</p>
+      <p><strong>Jitter:</strong> <span id="shareJitter"></span> ms</p>
+      <p><strong>Download Speed:</strong> <span id="shareDownload"></span> Mbps</p>
+      <p><strong>Upload Speed:</strong> <span id="shareUpload"></span> Mbps</p>
+        <p><strong>Date &amp; Time:</strong> <span id="shareDateTime"></span></p>
+    </div>
+  </div>
 
-	<div id="mainContainer" style="display: flex; align-items: flex-start; justify-content: center; flex-wrap: wrap;">
-		<div id="textBlock" style="
-		  max-width: full;
-		  color: rgb(19, 18, 18);
-		  border-radius: 8px;
-		  margin-top: -160px;
-		  font-size: 1.6rem;
-		">
-		  <h2>
-			  This tool helps you to check the current Network Status of the Streaming server assigned to your device.
-			<p>Use it to ensure your connection is stable for uninterrupted UlkaTV streaming.</p>
-		  </h2>
-		</div>
-	</div>
+  <div id="mainContainer" style="display: flex; align-items: flex-start; justify-content: center; flex-wrap: wrap;">
+    <div id="textBlock" style="
+      max-width: full;
+      color: rgb(19, 18, 18);
+      border-radius: 8px;
+      margin-top: -160px;
+      font-size: 1.6rem;
+    ">
+      <h2>
+        This tool helps you to check the current Network Status of the Streaming server assigned to your device.
+      <p>Use it to ensure your connection is stable for uninterrupted UlkaTV streaming.</p>
+      </h2>
+    </div>
+  </div>
 </div>
 
   
