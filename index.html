@@ -409,7 +409,7 @@
 </body>
 </html> -->
 
-
+<!-- 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -586,6 +586,212 @@
   <div class="form-section">
     <div class="form-logo">
       <img src="removebg-preview.png" alt="EW Logo" style="height: 90px;" />
+    </div>
+
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Username" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <button type="submit">Login</button>
+      <div id="error"></div>
+      <div id="success"></div>
+    </form>
+  </div>
+</div>
+
+<div class="footer">Ucast Media Private Limited.</div>
+
+<script>
+  const form = document.getElementById("loginForm");
+  const errorDiv = document.getElementById("error");
+  const successDiv = document.getElementById("success");
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    errorDiv.textContent = "";
+    successDiv.textContent = "";
+
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    // Hardcoded credentials
+    const validUser = "Maintest";
+    const validPass = "test@123";
+
+    if (username === validUser && password === validPass) {
+      successDiv.textContent = "Login successful! Redirecting...";
+      localStorage.setItem("loggedIn", "true");
+      localStorage.setItem("username", validUser);
+
+      setTimeout(() => {
+        window.location.href = "dashbord.html";
+      }, 1000);
+    } else {
+      errorDiv.textContent = "Invalid username or password.";
+    }
+  });
+</script>
+</body>
+</html> -->
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Login - UlkaTV Network</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #a08b8b;
+    color: rgb(184, 147, 147);
+    margin: 0;
+    padding: 0;
+  }
+
+  .header {
+    text-align: center;
+    padding: 28px 16px 0 16px;
+  }
+  .header h1 {
+    margin: 0;
+    font-size: 2.6rem;
+    color: #1a1a1a;
+    letter-spacing: 0.2px;
+  }
+  .header p {
+    margin: 6px 0 0 0;
+    font-size: 1.2rem;
+    color: #444;
+    line-height: 1.4;
+    text-align: center;
+    padding: 0 10px;
+  }
+
+  /* 🔑 Container pure center */
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 160px);
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  .form-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .form-logo {
+    margin-bottom: 15px;
+  }
+
+  form {
+    background: #1a1a1a;
+    padding: 2.5rem;
+    width: 400px;
+    border-radius: 15px;
+    box-shadow: 0 0 25px #333;
+  }
+
+  input {
+    display: block;
+    margin: 1rem 0;
+    padding: 0 1rem;
+    height: 45px;
+    font-size: 1rem;
+    width: 100%;
+    border-radius: 8px;
+    border: none;
+    box-sizing: border-box;
+  }
+
+  button {
+    height: 50px;
+    font-size: 1rem;
+    background-color: #ee4f57;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 1rem;
+    transition: background-color 0.2s ease;
+  }
+
+  button:hover {
+    background-color: #d93d47;
+  }
+
+  #error {
+    color: #ff6666;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+  }
+
+  #success {
+    color: #66ff66;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+  }
+
+  .footer {
+    text-align: center;
+    padding: 16px;
+    font-size: 1.2rem;
+    color: #f7f4f4;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(10, 10, 10, 0.9);
+    box-shadow: 0 -4px 8px rgba(0,0,0,0.04);
+  }
+
+  /* 📱 Responsive Adjustments */
+  @media (max-width: 768px) {
+    form {
+      width: 90%;
+      padding: 1.5rem;
+    }
+    .form-logo img {
+      height: 70px;
+    }
+    .header h1 {
+      font-size: 1.6rem;
+    }
+    .header p {
+      font-size: 1rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .header h1 {
+      font-size: 1.3rem;
+    }
+    .header p {
+      font-size: 0.95rem;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Speed Test for IPTV Network</h1>
+  <p>
+    This speed test measures IPTV network parameters between interconnected CDN servers.
+  </p>
+</div>
+
+<div class="container">
+  <div class="form-section">
+    <div class="form-logo">
+      <img src="removebg-preview.png" alt="EW Logo" style="height: 150px; width: 350px; margin-top: -60px;" />
     </div>
 
     <form id="loginForm">
