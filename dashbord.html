@@ -1750,7 +1750,6 @@ function testPing(targetIp) {
     });
 }
 
-
 function pingBetweenServers() {
     const serverA = SPEEDTEST_SERVERS[document.getElementById("serverA").value];
     const serverB = SPEEDTEST_SERVERS[document.getElementById("serverB").value];
@@ -1764,8 +1763,8 @@ function pingBetweenServers() {
     I("serverToServerMsg").textContent = `⏳ Testing ${serverA.name} → ${serverB.name} ...`;
     I("serverToServerMsg").style.color = "black";
 
-    // fetch(`/backend/ping_server_to_server.php?from=${getServerIp(serverA.server)}&to=${getServerIp(serverB.server)}`)
-	fetch(`http://103.189.178.121/streamserver/backend/ping_server_to_server.php?to=${encodeURIComponent(getServerIp(serverB.server))}`)
+    fetch(`/backend/ping_server_to_server.php?from=${getServerIp(serverA.server)}&to=${getServerIp(serverB.server)}`)
+	// fetch(`http://103.189.178.121/streamserver/backend/ping_server_to_server.php?to=${encodeURIComponent(getServerIp(serverB.server))}`)
 
         .then(res => res.json())
         .then(data => {
@@ -1872,9 +1871,16 @@ function I(i){return document.getElementById(i);}
 
 
 var SPEEDTEST_SERVERS = [
-
    {
     name: "Main CDN IP",
+    server: "//192.168.12.103/",   // correct format
+    dlURL: "backend/garbage.php",
+    ulURL: "backend/empty.php",
+    pingURL: "backend/empty.php",
+    getIpURL: "backend/getIP.php"
+  },
+   {
+    name: "streamtv",
     server: "//103.189.178.121/streamtv/",   // correct format
     dlURL: "backend/garbage.php",
     ulURL: "backend/empty.php",
@@ -2375,10 +2381,22 @@ function initUI(){
 }
 </script>
 <style type="text/css">
-  html,body{
+  /* html,body{
     border:none; padding:0; margin:0;
     background: #ae9393;
         color: rgb(137, 107, 107);
+  } */
+
+
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    /* ✅ Full background image */
+    background: url("den_1920x1080.png") no-repeat center center fixed;
+    background-size: cover;
+    color: rgb(184, 147, 147);
   }
   body{
     text-align:center;
@@ -2506,13 +2524,13 @@ function initUI(){
   width: 100%;
   font-size: 2.5em;
   z-index: 9;
-  color: rgb(53, 50, 235); /* ✅ Add this */
+  color: rgb(10, 10, 10); /* ✅ Add this */
   }
 
   div.testArea2 div.meterText {
     display: inline-block;
     font-size: 2.5em;
-    color: rgb(63, 47, 236); /* ✅ Add this */
+    color: rgb(10, 10, 10); /* ✅ Add this */
   }
 
   div.meterText:empty:before {
@@ -2719,7 +2737,7 @@ function initUI(){
     </script>
     
   <div id="logo">
-    <img src="removebg-preview.png" alt="ULKA TV Logo" style="height: 120px; width: 250px; margin-top: 30px;"/>
+    <img src="removebg-preview.png" alt="ULKA TV Logo" style="height: 150px; width: 350px; margin-top: 30px;"/>
   </div>
     
   <h1>NetWork Diagnostics</h1>
