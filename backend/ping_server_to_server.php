@@ -1,5 +1,6 @@
 <?php
-$to = $_GET['to'] ?? '';
+$to = $_GET['to'] ?? $argv[1] ?? '';
+
 if (!$to) {
     echo json_encode(["status" => "error", "message" => "No server specified"]);
     exit;
