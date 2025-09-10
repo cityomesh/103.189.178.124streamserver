@@ -1764,7 +1764,9 @@ function pingBetweenServers() {
     I("serverToServerMsg").textContent = `⏳ Testing ${serverA.name} → ${serverB.name} ...`;
     I("serverToServerMsg").style.color = "black";
 
-    fetch(`/backend/ping_server_to_server.php?from=${getServerIp(serverA.server)}&to=${getServerIp(serverB.server)}`)
+    // fetch(`/backend/ping_server_to_server.php?from=${getServerIp(serverA.server)}&to=${getServerIp(serverB.server)}`)
+	fetch(`http://103.189.178.121/streamserver/backend/ping_server_to_server.php?to=${encodeURIComponent(getServerIp(serverB.server))}`)
+
         .then(res => res.json())
         .then(data => {
             if (data.status === "ok") {
