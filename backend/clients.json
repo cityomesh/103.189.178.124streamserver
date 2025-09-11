@@ -1,7 +1,8 @@
 [
-  { "name": "Client-7.234", "ip": "103.98.7.234" },
-  { "name": "Client-80.2", "ip": "192.168.80.2" },
-  { "name": "Client-80.50", "ip": "192.168.80.50" },
-  { "name": "Client-147.14", "ip": "172.26.147.14" },
-  { "name": "Client-147.46", "ip": "172.26.147.46" }
+  { "name": "CDN DSN3", "ip": "10.6.6.165" },
+  { "name": "BLCRDHE EDGECDN1006", "ip": "10.7.7.252" },
+  { "name": "KAMALAMILLSHATHWAY1007", "ip": "172.31.42.2" },
+  { "name": "HYDERABAD EDGECDN1008", "ip": "172.31.32.2" },
+  { "name": "KANPUR EXCITEL", "ip": "172.29.3.178" },
+  { "name": "Testing", "ip": "192.168.12.53" }
 ]

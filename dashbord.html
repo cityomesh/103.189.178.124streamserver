@@ -1220,7 +1220,7 @@ body {
   };
   
 function testPing(targetIp) {
-  fetch(`http://103.189.178.121/streamserver/backend/ping_server_to_server.php?to=${encodeURIComponent(targetIp)}`)
+  fetch(`http://192.168.12.103/MainCdnServer/backend/ping_server_to_server.php?to=${encodeURIComponent(targetIp)}`)
     .then(res => res.json())
     .then(data => {
       if (data.status === "ok") {
@@ -1237,26 +1237,6 @@ function testPing(targetIp) {
       document.getElementById("message").textContent = "⚠️ Ping request failed";
       document.getElementById("message").style.color = "orange";
       console.error("testPing error:", err);
-    });
-}
-
-function testPing(targetIp) {
-   fetch("http://103.189.178.121/streamserver/backend/ping_server_to_server.php?to=103.98.7.234")
-    .then(res => res.json())
-    .then(data => {
-      if (data.status === "ok") {
-        document.getElementById("message").textContent =
-          `✅ Ping to ${data.target}: ${data.avg_ms} ms`;
-        document.getElementById("message").style.color = "green";
-      } else {
-        document.getElementById("message").textContent =
-          `❌ ${data.target} unreachable`;
-        document.getElementById("message").style.color = "red";
-      }
-    })
-    .catch(err => {
-      document.getElementById("message").textContent = "⚠️ Ping request failed";
-      document.getElementById("message").style.color = "orange";
     });
 }
 
@@ -1277,7 +1257,7 @@ function pingBetweenServers() {
     const backendUrl =
         window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
             ? `/backend/ping_server_to_server.php?from=${getServerIp(serverA.server)}&to=${getServerIp(serverB.server)}`
-            : `http://103.189.178.121/streamserver/backend/ping_server_to_server.php?to=${encodeURIComponent(getServerIp(serverB.server))}`;
+            : `http://192.168.12.103/MainCdnServer/backend/ping_server_to_server.php?to=${encodeURIComponent(getServerIp(serverB.server))}`;
 
     fetch(backendUrl)
         .then(res => res.json())
@@ -1407,14 +1387,14 @@ var SPEEDTEST_SERVERS = [
     pingURL: "backend/empty.php",
     getIpURL: "backend/getIP.php"
   },
-   {
-    name: "streamtv",
-    server: "//103.189.178.121/streamtv/",   // correct format
-    dlURL: "backend/garbage.php",
-    ulURL: "backend/empty.php",
-    pingURL: "backend/empty.php",
-    getIpURL: "backend/getIP.php"
-  },
+  //  {
+  //   name: "streamtv",
+  //   server: "//103.189.178.121/streamtv/",   // correct format
+  //   dlURL: "backend/garbage.php",
+  //   ulURL: "backend/empty.php",
+  //   pingURL: "backend/empty.php",
+  //   getIpURL: "backend/getIP.php"
+  // },
     {
     name: "CDN DSN3",
     server: "//10.6.6.165/",
@@ -1463,6 +1443,16 @@ var SPEEDTEST_SERVERS = [
     pingURL: "backend/empty.php",
     getIpURL: "backend/getIP.php"
   },
+];
+
+
+const CLIENTS = [
+  { name: "CDN DSN3", ip: "10.6.6.165" },
+  { name: "BLCRDHE EDGECDN1006", ip: "10.7.7.252" },
+  { name: "KAMALAMILLSHATHWAY1007", ip: "172.31.42.2" },
+  { name: "HYDERABAD EDGECDN1008", ip: "172.31.32.2" },
+  { name: "KANPUR EXCITEL", ip: "172.29.3.178" },
+  { name: "Testing", ip: "192.168.12.53" }
 ];
 
 // ✅ Add ping() function here
@@ -1583,14 +1573,47 @@ function checkAllZeroAfterTest() {
 }
 
 
+// function checkClientPings() {
+//     fetch("http://192.168.12.103/streamserver/backend/ping_clients.php?target=10.6.6.165")
+//         .then(res => res.json())
+//         .then(data => {
+//             console.log("Client Ping Results:", data);
+//             alert(JSON.stringify(data, null, 2));
+//         })
+//         .catch(err => console.error("Ping check failed:", err));
+// }
+
+
+
 function checkClientPings() {
-    fetch("http://103.189.178.121/streamserver/backend/ping_clients.php?target=10.6.6.165")
-        .then(res => res.json())
-        .then(data => {
-            console.log("Client Ping Results:", data);
-            alert(JSON.stringify(data, null, 2));
-        })
-        .catch(err => console.error("Ping check failed:", err));
+  const resultsDiv = document.getElementById("clientPingResults");
+  resultsDiv.innerHTML = ""; // reset previous results
+
+  CLIENTS.forEach(client => {
+    fetch(`http://192.168.12.103/MainCdnServer/backend/ping_clients.php?target=${encodeURIComponent(client.ip)}`)
+      .then(res => res.json())
+      .then(data => {
+        console.log(`✅ ${client.name} (${client.ip}) Ping Results:`, data);
+
+        const p = document.createElement("p");
+        if (data.status === "ok") {
+          p.textContent = `✅ ${client.name} (${client.ip}) → ${data.latency_ms} ms`;
+          p.style.color = "green";
+        } else {
+          p.textContent = `❌ ${client.name} (${client.ip}) → DOWN`;
+          p.style.color = "red";
+        }
+        resultsDiv.appendChild(p);
+      })
+      .catch(err => {
+        console.error(`❌ ${client.name} (${client.ip}) Ping check failed:`, err);
+
+        const p = document.createElement("p");
+        p.textContent = `❌ ${client.name} (${client.ip}) → Fetch Failed`;
+        p.style.color = "red";
+        resultsDiv.appendChild(p);
+      });
+  });
 }
 
 function resetTestState() {
@@ -1618,7 +1641,7 @@ function onServerChange() {
   const serverIp = getServerIp(selectedServer.server); // direct IP
 
   // Always hit Main CDN to check latency
-  const pingURL = `http://103.189.178.121/streamserver/backend/ping_server.php?target=${encodeURIComponent(serverIp)}&t=${Math.random()}`;
+  const pingURL = `http://192.168.12.103/MainCdnServer/backend/ping_server.php?target=${encodeURIComponent(serverIp)}&t=${Math.random()}`;
 
   fetch(pingURL, { method: "GET", cache: "no-cache" })
     .then(res => res.json())
@@ -1813,7 +1836,7 @@ function startStop() {
 
         // ✅ Save results to Main CDN server
         fetch(
-          "http://103.189.178.121/streamserver/backend/save_results.php",
+          "http://192.168.12.103/MainCdnServer/backend/save_results.php",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1831,7 +1854,7 @@ function startStop() {
         // 🔥 EXTRA: Server-to-Server check
         try {
           const res = await fetch(
-            "http://103.189.178.121/streamserver/backend/ping_server_to_server.php?to=" +
+            "http://192.168.12.103/MainCdnServer/backend/ping_server_to_server.php?to=" +
               ip
           );
           const data = await res.json();
@@ -1853,7 +1876,7 @@ function startStop() {
 
           // ✅ Re-save with server-to-server results
           fetch(
-            "http://103.189.178.121/streamserver/backend/save_results.php",
+            "http://192.168.12.103/MainCdnServer/backend/save_results.php",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -2310,21 +2333,35 @@ body {
         Server ↔ Server Ping
       </h3>
 
-		<div id="serverToServerArea" style="margin-top:30px;">
-      <label for="serverA" style="font-size:15px; font-weight:bold; color:rgb(245, 231, 231);">From:</label>
-      <select id="serverA" style="font-size:15px; padding:5px; margin-left:5px;"></select>
+<div id="serverToServerArea" style="margin-top:30px;">
+  <label for="serverA" style="font-size:15px; font-weight:bold; color:rgb(245, 231, 231);">From:</label>
+  <select id="serverA" style="font-size:15px; padding:5px; margin-left:5px;"></select>
 
-      <label for="serverB" style="font-size:15px; font-weight:bold; color:rgb(220, 207, 207); margin-left:20px;">To:</label>
-      <select id="serverB" style="font-size:15px; padding:5px; margin-left:5px;"></select>
+  <label for="serverB" style="font-size:15px; font-weight:bold; color:rgb(220, 207, 207); margin-left:20px;">To:</label>
+  <select id="serverB" style="font-size:15px; padding:5px; margin-left:5px;"></select>
 
-			 <button 
-        onclick="pingBetweenServers()" 
-        style="margin-left:20px; font-size:18px; padding:8px 15px; background:#ee4624; color:white; border:none; border-radius:6px; cursor:pointer;">
-        Start
-      </button>
+  <!-- Start + Check Client Pings Buttons inline -->
+  <div style="display:inline-flex; gap:15px; margin-left:20px; vertical-align:middle;">
+    <button 
+      onclick="pingBetweenServers()" 
+      style="font-size:18px; padding:8px 15px; background:#ee4624; color:white; border:none; border-radius:6px; cursor:pointer;">
+      Start
+    </button>
 
-      <p id="serverToServerMsg" style="margin-top:15px; font-size:18px; font-weight:bold; color:black;"></p>
-    </div>
+    <button 
+      onclick="checkClientPings()" 
+      style="font-size:18px; padding:8px 15px; background:#007bff; color:white; border:none; border-radius:6px; cursor:pointer;">
+      Check Client Pings
+    </button>
+  </div>
+
+  <!-- Results & Message -->
+  <div style="margin-top:15px;">
+    <div id="clientPingResults"></div>
+    <p id="serverToServerMsg" style="font-size:18px; font-weight:bold; color:black;"></p>
+  </div>
+</div>
+
 
 
   <div id="test">
@@ -2381,7 +2418,7 @@ body {
     ">
       <h2>
         This tool helps you to check the current Network Status of the Streaming server assigned to your device.
-      <p>Use it to ensure your connection is stable for uninterrupted StreamTv streaming.</p>
+      <p>Use it to ensure your connection is stable for uninterrupted StreamTv+ tvchannels.</p>
       </h2>
     </div>
   </div>
