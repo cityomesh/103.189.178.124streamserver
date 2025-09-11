@@ -1763,8 +1763,8 @@ function pingBetweenServers() {
     I("serverToServerMsg").textContent = `⏳ Testing ${serverA.name} → ${serverB.name} ...`;
     I("serverToServerMsg").style.color = "black";
 
-    // fetch(`/backend/ping_server_to_server.php?from=${getServerIp(serverA.server)}&to=${getServerIp(serverB.server)}`)
- 	fetch(`http://103.189.178.121/streamserver/backend/ping_server_to_server.php?to=${encodeURIComponent(getServerIp(serverB.server))}`)
+    fetch(`/backend/ping_server_to_server.php?from=${getServerIp(serverA.server)}&to=${getServerIp(serverB.server)}`)
+ 	// fetch(`http://103.189.178.121/streamserver/backend/ping_server_to_server.php?to=${encodeURIComponent(getServerIp(serverB.server))}`)
 
         .then(res => res.json())
         .then(data => {
@@ -1873,7 +1873,6 @@ function I(i){return document.getElementById(i);}
 
 
 var SPEEDTEST_SERVERS = [
-
    {
     name: "Main CDN IP",
     server: "//192.168.12.103/",   // correct format
@@ -2765,33 +2764,26 @@ body {
   <div id="loading" class="visible">
     <p id="message"><span class="loadCircle"></span>Selecting a server...</p>
   </div>
-  <div id="testWrapper" class="hidden">
-    <a class="privacy" href="#" onclick="I('privacyPolicy').style.display=''">Privacy</a>
 
-    <!-- ✅ Flexbox container for Server + Start button (center aligned) -->
-    <div id="serverArea" 
-      style="display:flex; justify-content:center; align-items:center; gap:15px; margin-top:20px;">
-      
-      <label for="server" style="font-weight:bold;">Local Server:</label>
+  <div id="serverArea" style="display:flex; justify-content:center; align-items:center; gap:20px; margin-top:25px;">
+    <div style="display:flex; flex-direction:column; align-items:center;">
+      <label for="server" style="font-weight:bold; color:rgb(244, 235, 235); font-size:18px; margin-top:13px;">Connected Device</label>
+      <span style="font-size:16px; color:rgb(242, 232, 232);">(Laptop / Mobile / Others)</span>
+    </div>
+    <div style="display:flex; justify-content:center; align-items:center; gap:15px; margin-top:10px;">
       <select id="server" onchange="onServerChange()" style="padding:5px; font-size:14px;"></select>
-
-      <!-- ✅ Start Button next to Server -->
       <div id="startStopBtn" onclick="startStop()"></div>
     </div>
 
-    <div id="pingResult" style="color: rgb(207, 182, 182); margin-top: 5px; text-align:center;"></div> 
-    <div id="errorMessage" style="margin-top:15px; font-weight:bold; color:red; display:none; text-align:center;"></div>
   </div>
 
-
-
-
-    <!-- ✅ Server-to-Server Ping Section -->
+    <div id="pingResult" style="color: rgb(207, 182, 182); margin-top: 5px; text-align:center;"></div> 
+    <div id="errorMessage" style="margin-top:15px; font-weight:bold; color:red; display:none; text-align:center;"></div>
+     <!-- ✅ Server-to-Server Ping Section -->
+    <h3 style="font-size:22px; font-weight:bold; color:rgb(243, 238, 238); margin-bottom:15px;">
+      Server ↔ Server Ping
+    </h3>
     <div id="serverToServerArea" style="margin-top:30px;">
-      <h3 style="font-size:22px; font-weight:bold; color:rgb(243, 238, 238); margin-bottom:15px;">
-        Server ↔ Server Ping
-      </h3>
-
       <label for="serverA" style="font-size:15px; font-weight:bold; color:rgb(245, 231, 231);">From:</label>
       <select id="serverA" style="font-size:15px; padding:5px; margin-left:5px;"></select>
 
