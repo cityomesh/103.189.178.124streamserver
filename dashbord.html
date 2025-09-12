@@ -1381,7 +1381,7 @@ function I(i){return document.getElementById(i);}
 var SPEEDTEST_SERVERS = [
    {
     name: "Main CDN IP",
-    server: "//192.168.12.103/",   // correct format
+    server: "//192.168.12.103/MainCdnServer/",   // correct format
     dlURL: "backend/garbage.php",
     ulURL: "backend/empty.php",
     pingURL: "backend/empty.php",
@@ -1454,7 +1454,6 @@ const CLIENTS = [
   { name: "KANPUR EXCITEL", ip: "172.29.3.178" },
   { name: "Testing", ip: "192.168.12.53" }
 ];
-
 // ✅ Add ping() function here
 async function testPing(server) {
   try {
@@ -1876,7 +1875,7 @@ function startStop() {
 
           // ✅ Re-save with server-to-server results
           fetch(
-            "http://192.168.12.103/MainCdnServer/backend/save_results.php",
+            "http://192.168.12.103/streamserver/backend/save_results.php",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -2333,35 +2332,21 @@ body {
         Server ↔ Server Ping
       </h3>
 
-<div id="serverToServerArea" style="margin-top:30px;">
-  <label for="serverA" style="font-size:15px; font-weight:bold; color:rgb(245, 231, 231);">From:</label>
-  <select id="serverA" style="font-size:15px; padding:5px; margin-left:5px;"></select>
+		<div id="serverToServerArea" style="margin-top:30px;">
+      <label for="serverA" style="font-size:15px; font-weight:bold; color:rgb(245, 231, 231);">From:</label>
+      <select id="serverA" style="font-size:15px; padding:5px; margin-left:5px;"></select>
 
-  <label for="serverB" style="font-size:15px; font-weight:bold; color:rgb(220, 207, 207); margin-left:20px;">To:</label>
-  <select id="serverB" style="font-size:15px; padding:5px; margin-left:5px;"></select>
+      <label for="serverB" style="font-size:15px; font-weight:bold; color:rgb(220, 207, 207); margin-left:20px;">To:</label>
+      <select id="serverB" style="font-size:15px; padding:5px; margin-left:5px;"></select>
 
-  <!-- Start + Check Client Pings Buttons inline -->
-  <div style="display:inline-flex; gap:15px; margin-left:20px; vertical-align:middle;">
-    <button 
-      onclick="pingBetweenServers()" 
-      style="font-size:18px; padding:8px 15px; background:#ee4624; color:white; border:none; border-radius:6px; cursor:pointer;">
-      Start
-    </button>
+			 <button 
+        onclick="pingBetweenServers()" 
+        style="margin-left:20px; font-size:18px; padding:8px 15px; background:#ee4624; color:white; border:none; border-radius:6px; cursor:pointer;">
+        Start
+      </button>
 
-    <button 
-      onclick="checkClientPings()" 
-      style="font-size:18px; padding:8px 15px; background:#007bff; color:white; border:none; border-radius:6px; cursor:pointer;">
-      Check Client Pings
-    </button>
-  </div>
-
-  <!-- Results & Message -->
-  <div style="margin-top:15px;">
-    <div id="clientPingResults"></div>
-    <p id="serverToServerMsg" style="font-size:18px; font-weight:bold; color:black;"></p>
-  </div>
-</div>
-
+      <p id="serverToServerMsg" style="margin-top:15px; font-size:18px; font-weight:bold; color:black;"></p>
+    </div>
 
 
   <div id="test">
