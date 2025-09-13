@@ -7,7 +7,7 @@
 var SPEEDTEST_SERVERS = [
    {
     name: "Main CDN IP",
-    server: "//192.168.12.103/MainCdnServer/",   // correct format
+    server: "//192.168.12.103/",   // correct format
     dlURL: "backend/garbage.php",
     ulURL: "backend/empty.php",
     pingURL: "backend/empty.php",
