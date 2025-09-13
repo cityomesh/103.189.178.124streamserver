@@ -1,4 +1,14 @@
 <?php
+// ----------------------
+// 🟢 CORS Headers
+// ----------------------
+header("Access-Control-Allow-Origin: http://103.189.178.121"); // or "*" if you want to allow all
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+
+// ----------------------
+// 🟢 INPUT
+// ----------------------
 $to = $_GET['to'] ?? $argv[1] ?? '';
 
 if (!$to) {
@@ -69,12 +79,14 @@ if ($result !== false) {
     }
 }
 
+// ----------------------
+// 🟢 OUTPUT
+// ----------------------
 echo json_encode([
     "status" => "ok",
-    "target" => $to,  // ✅ Added
+    "target" => $to,
     "ping_ms" => round($ping, 2),
     "jitter_ms" => round($jitter, 2),
     "download_mbps" => round($downloadSpeed * 8, 2), // MBps → Mbps
     "upload_mbps"  => round($uploadSpeed * 8, 2)
 ]);
-
