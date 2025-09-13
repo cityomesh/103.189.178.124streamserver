@@ -1253,11 +1253,11 @@ function pingBetweenServers() {
     I("serverToServerMsg").textContent = `⏳ Testing ${serverA.name} → ${serverB.name} ...`;
     I("serverToServerMsg").style.color = "black";
 
-    // ✅ Decide backend URL dynamically
+    // instead of calling 192.168.12.103 directly
     const backendUrl =
-        window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-            ? `/backend/ping_server_to_server.php?from=${getServerIp(serverA.server)}&to=${getServerIp(serverB.server)}`
-            : `http://192.168.12.103/MainCdnServer/backend/ping_server_to_server.php?to=${encodeURIComponent(getServerIp(serverB.server))}`;
+      `http://103.189.178.121/streamserver/backend/pingProxy.php` +
+      `?target=192.168.12.103&path=MainCdnServer/backend/ping_server_to_server.php` +
+      `&from=${getServerIp(serverA.server)}&to=${getServerIp(serverB.server)}`;
 
     fetch(backendUrl)
         .then(res => res.json())
@@ -1570,6 +1570,18 @@ function checkAllZeroAfterTest() {
         }
     }, 5000); 
 }
+
+
+// function checkClientPings() {
+//     fetch("http://192.168.12.103/streamserver/backend/ping_clients.php?target=10.6.6.165")
+//         .then(res => res.json())
+//         .then(data => {
+//             console.log("Client Ping Results:", data);
+//             alert(JSON.stringify(data, null, 2));
+//         })
+//         .catch(err => console.error("Ping check failed:", err));
+// }
+
 
 
 function checkClientPings() {

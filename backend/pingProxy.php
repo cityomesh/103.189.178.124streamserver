@@ -10,16 +10,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 if (!isset($_GET['target']) || !isset($_GET['path'])) {
     http_response_code(400);
-    echo "Missing target or path";
+    echo json_encode(["status"=>"error","message"=>"Missing target or path"]);
     exit;
 }
 
-$target = $_GET['target']; // 103.98.7.234
-$path   = $_GET['path'];   // backend/pingProxy.php
+$target = $_GET['target']; 
+$path   = $_GET['path'];   
 
-// extra query parameters (r=0.123 etc)
+// build query string except target & path
 $queryString = $_SERVER['QUERY_STRING'];
-// remove target & path from query string
 parse_str($queryString, $params);
 unset($params['target']);
 unset($params['path']);
@@ -36,6 +35,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $response = curl_exec($ch);
+
+if ($response === false) {
+    $error = curl_error($ch);
+    http_response_code(500);
+    echo json_encode(["status"=>"error","message"=>"cURL failed","error"=>$error,"url"=>$url]);
+    curl_close($ch);
+    exit;
+}
+
 $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
