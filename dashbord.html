@@ -1257,7 +1257,7 @@ function pingBetweenServers() {
     const backendUrl =
       `http://103.189.178.121/streamserver/backend/pingProxy.php` +
       `?target=192.168.12.103` + 
-      `&path=MainCdnServer/backend/ping_server_to_server.php` +
+      `&path=backend/ping_server_to_server.php` +  // ← correct path
       `&from=${getServerIp(serverA.server)}` +
       `&to=${getServerIp(serverB.server)}`;
 

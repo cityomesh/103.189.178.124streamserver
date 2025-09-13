@@ -26,10 +26,12 @@ $qs = http_build_query($params);
 // Build URL
 $url = "http://{$target}/{$path}" . ($qs ? "?$qs" : "");
 
-// Debug (temporary) – check final URL
-// Remove exit; once confirmed working
-// echo json_encode(["debug_url" => $url]);
-// exit;
+// ✅ Debug: show final URL
+echo json_encode([
+    "status" => "debug",
+    "url" => $url
+]);
+exit;
 
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
