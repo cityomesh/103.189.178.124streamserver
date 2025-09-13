@@ -1,58 +1,49 @@
 <?php
-// ----------------------
-// 🔹 CORS & Headers
-// ----------------------
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type, X-Requested-With");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Content-Type: application/json; charset=UTF-8");
 
-// Handle preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-// ----------------------
-// 🔹 Validate Input
-// ----------------------
 if (!isset($_GET['target']) || !isset($_GET['path'])) {
     http_response_code(400);
     echo json_encode(["status" => "error", "message" => "Missing target or path"]);
     exit;
 }
 
-$target = $_GET['target']; // e.g., 192.168.12.103
-$path   = $_GET['path'];   // e.g., MainCdnServer/backend/ping_server_to_server.php
+$target = $_GET['target'];
+$path   = $_GET['path'];
 
 // Rebuild query string without target & path
 parse_str($_SERVER['QUERY_STRING'], $params);
-unset($params['target']);
-unset($params['path']);
+unset($params['target'], $params['path']);
 $qs = http_build_query($params);
 
-// ----------------------
-// 🔹 Prepare Proxy URL
-// ----------------------
+// Build URL
 $url = "http://{$target}/{$path}" . ($qs ? "?$qs" : "");
 
-// ----------------------
-// 🔹 cURL Request
-// ----------------------
+// Debug (temporary) – check final URL
+// Remove exit; once confirmed working
+// echo json_encode(["debug_url" => $url]);
+// exit;
+
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_TIMEOUT, 20); // timeout 20s
+curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, file_get_contents("php://input"));
 }
 
-// Execute cURL
 $response = curl_exec($ch);
 $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-// Handle curl errors
 if ($response === false) {
     $error = curl_error($ch);
     curl_close($ch);
@@ -62,9 +53,5 @@ if ($response === false) {
 }
 
 curl_close($ch);
-
-// ----------------------
-// 🔹 Return Response
-// ----------------------
 http_response_code($httpcode);
 echo $response;
