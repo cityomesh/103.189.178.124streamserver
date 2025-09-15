@@ -1262,6 +1262,7 @@ function pingBetweenServers() {
       `&to=${getServerIp(serverB.server)}`;
 
     fetch(backendUrl)
+    
         .then(res => res.json())
         .then(data => {
             if (data.status === "ok") {
