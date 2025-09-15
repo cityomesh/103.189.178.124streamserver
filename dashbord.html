@@ -1249,68 +1249,41 @@ function pingBetweenServers() {
         return;
     }
 
-    // 🟡 Show loading state
     I("serverToServerMsg").textContent = `⏳ Testing ${serverA.name} → ${serverB.name} ...`;
     I("serverToServerMsg").style.color = "black";
 
-    // instead of calling 192.168.12.103 directly
     const backendUrl =
       `http://103.189.178.121/streamserver/backend/pingProxy.php` +
-      `?target=192.168.12.103` + 
-      `&path=backend/ping_server_to_server.php` +  // ← correct path
+      `?target=192.168.12.103` +
+      `&path=backend/ping_server_to_server.php` +
       `&from=${getServerIp(serverA.server)}` +
       `&to=${getServerIp(serverB.server)}`;
 
     fetch(backendUrl)
         .then(res => res.json())
         .then(data => {
+            console.log("Server-to-server response:", data);
+
             if (data.status === "ok") {
-                I("serverToServerMsg").textContent = `✅ ${serverA.name} → ${serverB.name} tested successfully`;
+                I("serverToServerMsg").textContent = `✅ ${serverA.name} → ${serverB.name} success`;
                 I("serverToServerMsg").style.color = "white";
 
-                // Reset placeholders
-                I("pingText").textContent = "-";
-                I("jitText").textContent = "-";
-                I("dlText").textContent = "-";
-                I("ulText").textContent = "-";
+                I("pingText").textContent = data.ping_ms ?? "-";
+                I("jitText").textContent = data.jitter_ms ?? "-";
+                I("dlText").textContent = data.download_mbps ?? "-";
+                I("ulText").textContent = data.upload_mbps ?? "-";
 
-                // Progressive update sequence
-                setTimeout(() => {
-                    I("pingText").textContent = data.ping_ms ? format(data.ping_ms) : "-";
-                    I("sharePing").textContent = I("pingText").textContent;
-                }, 500);
+                I("sharePing").textContent = I("pingText").textContent;
+                I("shareJitter").textContent = I("jitText").textContent;
+                I("shareDownload").textContent = I("dlText").textContent;
+                I("shareUpload").textContent = I("ulText").textContent;
 
-                setTimeout(() => {
-                    I("jitText").textContent = data.jitter_ms ? format(data.jitter_ms) : "-";
-                    I("shareJitter").textContent = I("jitText").textContent;
-                }, 1000);
-
-                setTimeout(() => {
-                    I("ulText").textContent = data.upload_mbps ? format(data.upload_mbps) : "-";
-                    I("shareUpload").textContent = I("ulText").textContent;
-
-                    if (data.upload_mbps) {
-                        drawMeter(I("ulMeter"), mbpsToAmount(Number(data.upload_mbps)), meterBk, ulColor, 1, progColor);
-                    }
-                }, 1500);
-
-                setTimeout(() => {
-                    I("dlText").textContent = data.download_mbps ? format(data.download_mbps) : "-";
-                    I("shareDownload").textContent = I("dlText").textContent;
-
-                    if (data.download_mbps) {
-                        drawMeter(I("dlMeter"), mbpsToAmount(Number(data.download_mbps)), meterBk, dlColor, 1, progColor);
-                    }
-                }, 2000);
-
-                // ✅ Populate Share Results Area (basic info immediately)
                 let testId = generateUUID();
                 I("testId").textContent = testId;
                 I("serverUsed").textContent = `${serverA.name} → ${serverB.name}`;
                 I("shareIp").textContent = `${getServerIp(serverA.server)} → ${getServerIp(serverB.server)}`;
                 I("shareDateTime").textContent = new Date().toLocaleString();
                 I("shareArea").style.display = "";
-
             } else {
                 I("serverToServerMsg").textContent = `❌ ${serverA.name} → ${serverB.name} unreachable`;
                 I("serverToServerMsg").style.color = "red";
@@ -1325,7 +1298,6 @@ function pingBetweenServers() {
             document.querySelector("button[onclick='pingBetweenServers()']").style.background = "#007bff";
         });
 }
-
 
 function getEffectiveServer(originalServer) {
   return originalServer;
