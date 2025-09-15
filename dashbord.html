@@ -1254,15 +1254,14 @@ function pingBetweenServers() {
     I("serverToServerMsg").style.color = "black";
 
     // instead of calling 192.168.12.103 directly
-    const backendUrl =
-      `http://103.189.178.121/streamserver/backend/pingProxy.php` +
-      `?target=192.168.12.103` + 
-      `&path=backend/ping_server_to_server.php` +  // ← correct path
-      `&from=${getServerIp(serverA.server)}` +
-      `&to=${getServerIp(serverB.server)}`;
+  const backendUrl =
+    `http://192.168.12.103/streamserver/backend/pingProxy.php` +
+    `?target=192.168.12.103` + 
+    `&path=backend/ping_server_to_server.php` +
+    `&from=${getServerIp(serverA.server)}` +
+    `&to=${getServerIp(serverB.server)}`;
 
     fetch(backendUrl)
-    
         .then(res => res.json())
         .then(data => {
             if (data.status === "ok") {

@@ -1,65 +1,92 @@
 <?php
-header("Content-Type: application/json");
+// ----------------------
+// 🟢 CORS Headers
+// ----------------------
+header("Access-Control-Allow-Origin: http://103.189.178.121"); // or "*" if you want to allow all
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 
-// Params
-$from = $_GET['from'] ?? '';
-$to   = $_GET['to'] ?? '';
+// ----------------------
+// 🟢 INPUT
+// ----------------------
+$to = $_GET['to'] ?? $argv[1] ?? '';
 
-if (!$from || !$to) {
-    echo json_encode(["status" => "error", "message" => "Missing from or to"]);
+if (!$to) {
+    echo json_encode(["status" => "error", "message" => "No server specified"]);
     exit;
 }
 
-// ---------- PING ----------
-$pingResult = shell_exec("ping -c 4 -q " . escapeshellarg($to));
-preg_match('/min\/avg\/max\/mdev = ([\d\.]+)\/([\d\.]+)\/([\d\.]+)\/([\d\.]+)/', $pingResult, $matches);
-
-$ping   = isset($matches[2]) ? (float)$matches[2] : 0; // avg
-$jitter = isset($matches[4]) ? (float)$matches[4] : 0; // mdev
-
-// ---------- DOWNLOAD TEST ----------
-$downloadStart = microtime(true);
-$downloadData  = @file_get_contents("http://$to/testfile_10MB.bin"); // 👈 you need a test file
-$downloadEnd   = microtime(true);
-
-$downloadMbps = 0;
-if ($downloadData !== false) {
-    $sizeBytes   = strlen($downloadData);
-    $timeTaken   = $downloadEnd - $downloadStart;
-    if ($timeTaken > 0) {
-        $downloadMbps = round(($sizeBytes * 8) / ($timeTaken * 1024 * 1024), 2);
+// ----------------------
+// 🟢 PING Calculation
+// ----------------------
+exec("ping -c 5 " . escapeshellarg($to), $output, $retval);
+$pings = [];
+foreach ($output as $line) {
+    if (preg_match('/time=([\d\.]+)/', $line, $matches)) {
+        $pings[] = floatval($matches[1]);
     }
 }
 
-// ---------- UPLOAD TEST ----------
-$uploadMbps = 0;
-$uploadStart = microtime(true);
+$ping = 0;
+$jitter = 0;
+if (count($pings) > 0) {
+    $ping = array_sum($pings) / count($pings);
+    $jitter = max($pings) - min($pings);
+}
 
-$context = stream_context_create([
-    'http' => [
-        'method'  => 'POST',
-        'header'  => "Content-Type: application/octet-stream\r\n",
-        'content' => str_repeat("A", 5 * 1024 * 1024) // 5MB upload test
-    ]
-]);
+// ----------------------
+// 🟢 DOWNLOAD Test
+// ----------------------
+$downloadUrl = "http://{$to}/streamserver/backend/garbage.php?ckSize=10";
+$start = microtime(true);
+$data = @file_get_contents($downloadUrl, false, stream_context_create([
+    "http" => ["timeout" => 10]
+]));
+$end = microtime(true);
 
-$uploadResponse = @file_get_contents("http://$to/upload_test.php", false, $context);
-$uploadEnd = microtime(true);
-
-if ($uploadResponse !== false) {
-    $timeTaken = $uploadEnd - $uploadStart;
-    if ($timeTaken > 0) {
-        $uploadMbps = round((5 * 1024 * 1024 * 8) / ($timeTaken * 1024 * 1024), 2);
+$downloadSpeed = 0;
+if ($data !== false) {
+    $size = strlen($data) / (1024 * 1024); // MB
+    $time = $end - $start;
+    if ($time > 0) {
+        $downloadSpeed = round($size / $time, 2); // MBps
     }
 }
 
-// ---------- RESPONSE ----------
+// ----------------------
+// 🟢 UPLOAD Test
+// ----------------------
+$uploadUrl = "http://{$to}/streamserver/backend/empty.php";
+$postData = str_repeat("0", 5 * 1024 * 1024); // 5MB dummy
+
+$start = microtime(true);
+$opts = ['http' => [
+    'method'  => 'POST',
+    'header'  => "Content-Type: application/octet-stream\r\n",
+    'content' => $postData,
+    'timeout' => 10
+]];
+$context  = stream_context_create($opts);
+$result = @file_get_contents($uploadUrl, false, $context);
+$end = microtime(true);
+
+$uploadSpeed = 0;
+if ($result !== false) {
+    $size = strlen($postData) / (1024 * 1024); // MB
+    $time = $end - $start;
+    if ($time > 0) {
+        $uploadSpeed = round($size / $time, 2);
+    }
+}
+
+// ----------------------
+// 🟢 OUTPUT
+// ----------------------
 echo json_encode([
     "status" => "ok",
-    "from" => $from,
     "target" => $to,
-    "ping_ms" => $ping,
-    "jitter_ms" => $jitter,
-    "download_mbps" => $downloadMbps,
-    "upload_mbps" => $uploadMbps
+    "ping_ms" => round($ping, 2),
+    "jitter_ms" => round($jitter, 2),
+    "download_mbps" => round($downloadSpeed * 8, 2), // MBps → Mbps
+    "upload_mbps"  => round($uploadSpeed * 8, 2)
 ]);
