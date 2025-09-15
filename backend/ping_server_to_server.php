@@ -1,31 +1,17 @@
 <?php
-// ----------------------
-// CORS Headers
-// ----------------------
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
-
-// ----------------------
-// INPUT
-// ----------------------
-$to = $_GET['to'] ?? '';
-$from = $_GET['from'] ?? '';
+$to = $_GET['to'] ?? $argv[1] ?? '';
 
 if (!$to) {
     echo json_encode(["status" => "error", "message" => "No server specified"]);
     exit;
 }
 
-// ----------------------
-// PING
-// ----------------------
+// PING Calculation
 exec("ping -c 5 " . escapeshellarg($to), $output, $retval);
 $pings = [];
 foreach ($output as $line) {
@@ -41,14 +27,10 @@ if (count($pings) > 0) {
     $jitter = max($pings) - min($pings);
 }
 
-// ----------------------
 // DOWNLOAD Test
-// ----------------------
-$downloadUrl = "http://{$to}/streamserver/backend/garbage.php?ckSize=5"; // 5MB file
+$downloadUrl = "http://{$to}/streamserver/backend/garbage.php?ckSize=10";
 $start = microtime(true);
-$data = @file_get_contents($downloadUrl, false, stream_context_create([
-    "http" => ["timeout" => 10]
-]));
+$data = @file_get_contents($downloadUrl, false, stream_context_create(["http" => ["timeout" => 10]]));
 $end = microtime(true);
 
 $downloadSpeed = 0;
@@ -56,15 +38,13 @@ if ($data !== false) {
     $size = strlen($data) / (1024 * 1024); // MB
     $time = $end - $start;
     if ($time > 0) {
-        $downloadSpeed = round(($size / $time) * 8, 2); // Mbps
+        $downloadSpeed = round($size / $time, 2); // MBps
     }
 }
 
-// ----------------------
 // UPLOAD Test
-// ----------------------
 $uploadUrl = "http://{$to}/streamserver/backend/empty.php";
-$postData = str_repeat("0", 2 * 1024 * 1024); // 2MB dummy
+$postData = str_repeat("0", 5 * 1024 * 1024); // 5MB dummy
 
 $start = microtime(true);
 $opts = ['http' => [
@@ -82,19 +62,17 @@ if ($result !== false) {
     $size = strlen($postData) / (1024 * 1024); // MB
     $time = $end - $start;
     if ($time > 0) {
-        $uploadSpeed = round(($size / $time) * 8, 2); // Mbps
+        $uploadSpeed = round($size / $time, 2);
     }
 }
 
-// ----------------------
 // OUTPUT
-// ----------------------
 echo json_encode([
     "status" => "ok",
-    "from" => $from,
     "target" => $to,
     "ping_ms" => round($ping, 2),
     "jitter_ms" => round($jitter, 2),
-    "download_mbps" => $downloadSpeed,
-    "upload_mbps"  => $uploadSpeed
+    "download_mbps" => round($downloadSpeed * 8, 2),
+    "upload_mbps"  => round($uploadSpeed * 8, 2)
 ]);
+?>
