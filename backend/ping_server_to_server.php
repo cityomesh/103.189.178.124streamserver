@@ -91,4 +91,3 @@ echo json_encode([
     "download_mbps" => $downloadSpeed,
     "upload_mbps"  => $uploadSpeed
 ]);
-
