@@ -1,8 +1,11 @@
 <?php
-// 🟢 Debugging enable chesamu
+// 🟢 Debugging enable
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+
+// 🟢 Long-running requests support
+ini_set('max_execution_time', 200);
 
 // 🟢 CORS headers
 header("Access-Control-Allow-Origin: *");
@@ -29,27 +32,26 @@ if (!isset($_GET['target']) || !isset($_GET['path'])) {
 $target = $_GET['target']; // Example: 192.168.12.103
 $path   = $_GET['path'];   // Example: MainCdnServer/backend/ping_server_to_server.php
 
-// 🔹 Remaining query parameters extract cheyyadam
+// 🔹 Remaining query parameters
 parse_str($_SERVER['QUERY_STRING'], $params);
 unset($params['target'], $params['path']);
 $qs = http_build_query($params);
 
-// 🔹 Path ni correct ga encode cheyyadam
+// 🔹 Path encoding
 $encodedPath = implode("/", array_map('rawurlencode', explode("/", $path)));
 
 // 🔹 Final URL
 $url = "http://{$target}/{$encodedPath}" . ($qs ? "?$qs" : "");
 
-// 🔹 Debugging: final URL chudachu (temporary)
-// echo json_encode(["debug_url" => $url]); exit;
-
 // 🟢 CURL initialize
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_TIMEOUT, 20);
-curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
 
-// POST request handle cheyyadam
+// ⚡ Long timeout for 40s download + 40s upload
+curl_setopt($ch, CURLOPT_TIMEOUT, 90);
+curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+
+// POST request handle
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, file_get_contents("php://input"));
@@ -77,4 +79,3 @@ curl_close($ch);
 // 🟢 Forward the response and HTTP status code
 http_response_code($httpcode);
 echo $response;
-?>
