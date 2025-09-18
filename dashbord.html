@@ -1326,32 +1326,46 @@ function testPing(targetIp) {
 // }
 
 
+
 function pingBetweenServers() {
     const serverA = SPEEDTEST_SERVERS[document.getElementById("serverA").value];
     const serverB = SPEEDTEST_SERVERS[document.getElementById("serverB").value];
+    const msgEl = I("serverToServerMsg");
+    const startBtn = document.querySelector("button[onclick='pingBetweenServers()']");
 
     if (!serverA || !serverB) {
-        I("serverToServerMsg").textContent = "❌ Please select both servers.";
+        msgEl.textContent = "❌ Please select both servers.";
+        msgEl.style.color = "red";
         return;
     }
 
-    // 🟡 Show loading state
-    I("serverToServerMsg").textContent = `⏳ Testing ${serverA.name} → ${serverB.name} ...`;
-    I("serverToServerMsg").style.color = "black";
+    // Disable button during backend test
+    startBtn.disabled = true;
+    startBtn.style.opacity = 0.6;
+
+    // Animated "Please wait" next to serverB
+    let dots = 0;
+    const loadingInterval = setInterval(() => {
+        dots = (dots + 1) % 4; // cycles 0..3
+        msgEl.textContent = `⏳ Testing ${serverA.name} → ${serverB.name} (Please wait 40sec${'.'.repeat(dots)})`;
+        msgEl.style.color = "black";
+    }, 500);
 
     const backendUrl =
-      `http://103.189.178.121/streamserver/backend/pingProxy.php` +
-      `?target=192.168.12.103` + 
-      `&path=MainCdnServer/backend/ping_server_to_server.php` + // correct path
-      `&from=${getServerIp(serverA.server)}` +
-      `&to=${getServerIp(serverB.server)}`;
-      
+        `http://103.189.178.121/streamserver/backend/pingProxy.php` +
+        `?target=192.168.12.103` + 
+        `&path=MainCdnServer/backend/ping_server_to_server.php` +
+        `&from=${getServerIp(serverA.server)}` +
+        `&to=${getServerIp(serverB.server)}`;
+
     fetch(backendUrl)
         .then(res => res.json())
         .then(data => {
+            clearInterval(loadingInterval); // stop animation
+
             if (data.status === "ok") {
-                I("serverToServerMsg").textContent = `✅ ${serverA.name} → ${serverB.name} tested successfully`;
-                I("serverToServerMsg").style.color = "white";
+                msgEl.textContent = `✅ ${serverA.name} → ${serverB.name} tested successfully`;
+                msgEl.style.color = "white";
 
                 // Reset placeholders
                 I("pingText").textContent = "-";
@@ -1388,7 +1402,7 @@ function pingBetweenServers() {
                     }
                 }, 2000);
 
-                // ✅ Populate Share Results Area (basic info immediately)
+                // Populate Share Results Area
                 let testId = generateUUID();
                 I("testId").textContent = testId;
                 I("serverUsed").textContent = `${serverA.name} → ${serverB.name}`;
@@ -1397,19 +1411,125 @@ function pingBetweenServers() {
                 I("shareArea").style.display = "";
 
             } else {
-                I("serverToServerMsg").textContent = `❌ ${serverA.name} → ${serverB.name} unreachable`;
-                I("serverToServerMsg").style.color = "red";
+                msgEl.textContent = `❌ ${serverA.name} → ${serverB.name} unreachable`;
+                msgEl.style.color = "red";
             }
 
-            document.querySelector("button[onclick='pingBetweenServers()']").style.background = "#007bff";
+            startBtn.style.background = "#007bff";
+            startBtn.disabled = false;
         })
         .catch(err => {
+            clearInterval(loadingInterval); // stop animation
             console.error(err);
-            I("serverToServerMsg").textContent = "⚠️ Server-to-server test failed";
-            I("serverToServerMsg").style.color = "orange";
-            document.querySelector("button[onclick='pingBetweenServers()']").style.background = "#007bff";
+            msgEl.textContent = "⚠️ Server-to-server test failed";
+            msgEl.style.color = "orange";
+            startBtn.style.background = "#007bff";
+            startBtn.disabled = false;
         });
 }
+
+
+// function pingBetweenServers() {
+//     const serverA = SPEEDTEST_SERVERS[document.getElementById("serverA").value];
+//     const serverB = SPEEDTEST_SERVERS[document.getElementById("serverB").value];
+//     const msgEl = I("serverToServerMsg");
+//     const startBtn = document.querySelector("button[onclick='pingBetweenServers()']");
+
+//     if (!serverA || !serverB) {
+//         msgEl.textContent = "❌ Please select both servers.";
+//         msgEl.style.color = "red";
+//         return;
+//     }
+
+//     // Disable button during backend test
+//     startBtn.disabled = true;
+//     startBtn.style.opacity = 0.6;
+
+//     // Animated "40 seconds, please wait..." message
+//     let dots = 0;
+//     const loadingInterval = setInterval(() => {
+//         dots = (dots + 1) % 4;
+//         msgEl.textContent = `⏳ 40 seconds, please wait${'.'.repeat(dots)}`;
+//         msgEl.style.color = "black";
+//     }, 500);
+
+//     const backendUrl =
+//         `http://103.189.178.121/streamserver/backend/pingProxy.php` +
+//         `?target=192.168.12.103` + 
+//         `&path=MainCdnServer/backend/ping_server_to_server.php` +
+//         `&from=${getServerIp(serverA.server)}` +
+//         `&to=${getServerIp(serverB.server)}`;
+
+//     fetch(backendUrl)
+//         .then(res => res.json())
+//         .then(data => {
+//             clearInterval(loadingInterval); // stop animation
+
+//             if (data.status === "ok") {
+//                 msgEl.textContent = `✅ ${serverA.name} → ${serverB.name} tested successfully`;
+//                 msgEl.style.color = "white";
+
+//                 // Reset placeholders
+//                 I("pingText").textContent = "-";
+//                 I("jitText").textContent = "-";
+//                 I("dlText").textContent = "-";
+//                 I("ulText").textContent = "-";
+
+//                 // Progressive update sequence
+//                 setTimeout(() => {
+//                     I("pingText").textContent = data.ping_ms ? format(data.ping_ms) : "-";
+//                     I("sharePing").textContent = I("pingText").textContent;
+//                 }, 500);
+
+//                 setTimeout(() => {
+//                     I("jitText").textContent = data.jitter_ms ? format(data.jitter_ms) : "-";
+//                     I("shareJitter").textContent = I("jitText").textContent;
+//                 }, 1000);
+
+//                 setTimeout(() => {
+//                     I("ulText").textContent = data.upload_mbps ? format(data.upload_mbps) : "-";
+//                     I("shareUpload").textContent = I("ulText").textContent;
+
+//                     if (data.upload_mbps) {
+//                         drawMeter(I("ulMeter"), mbpsToAmount(Number(data.upload_mbps)), meterBk, ulColor, 1, progColor);
+//                     }
+//                 }, 1500);
+
+//                 setTimeout(() => {
+//                     I("dlText").textContent = data.download_mbps ? format(data.download_mbps) : "-";
+//                     I("shareDownload").textContent = I("dlText").textContent;
+
+//                     if (data.download_mbps) {
+//                         drawMeter(I("dlMeter"), mbpsToAmount(Number(data.download_mbps)), meterBk, dlColor, 1, progColor);
+//                     }
+//                 }, 2000);
+
+//                 // Populate Share Results Area
+//                 let testId = generateUUID();
+//                 I("testId").textContent = testId;
+//                 I("serverUsed").textContent = `${serverA.name} → ${serverB.name}`;
+//                 I("shareIp").textContent = `${getServerIp(serverA.server)} → ${getServerIp(serverB.server)}`;
+//                 I("shareDateTime").textContent = new Date().toLocaleString();
+//                 I("shareArea").style.display = "";
+
+//             } else {
+//                 msgEl.textContent = `❌ ${serverA.name} → ${serverB.name} unreachable`;
+//                 msgEl.style.color = "red";
+//             }
+
+//             startBtn.style.background = "#007bff";
+//             startBtn.disabled = false;
+//         })
+//         .catch(err => {
+//             clearInterval(loadingInterval); // stop animation
+//             console.error(err);
+//             msgEl.textContent = "⚠️ Server-to-server test failed";
+//             msgEl.style.color = "orange";
+//             startBtn.style.background = "#007bff";
+//             startBtn.disabled = false;
+//         });
+// }
+
 
 function getEffectiveServer(originalServer) {
   return originalServer;

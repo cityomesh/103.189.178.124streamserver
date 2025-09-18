@@ -1,3 +1,4 @@
+
 <?php
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
@@ -53,9 +54,7 @@ if (count($pings)) {
 }
 
 //// ------------------- DOWNLOAD SPEED (Dynamic 40s) ------------------- ////
-// $downloadUrl = "http://{$to}/MainCdnServer/backend/garbage.php"; // infinite random data
-$downloadUrl = "http://$to/MainCdnServer/backend/garbage.php";
-
+$downloadUrl = "http://{$to}/MainCdnServer/backend/garbage.php"; // infinite random data
 $ch = curl_init($downloadUrl);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
 curl_setopt($ch, CURLOPT_TIMEOUT, 45);
@@ -86,34 +85,27 @@ if ($startTime) {
     $result["download_mbps"] = round($mbps, 2);
 }
 
-//// ------------------- UPLOAD SPEED (Dynamic 40s continuous) ------------------- ////
-$uploadUrl = "http://$to/MainCdnServer/backend/empty.php";
+//// ------------------- UPLOAD SPEED (Dynamic 40s) ------------------- ////
+$uploadUrl = "http://{$to}/MainCdnServer/backend/empty.php";
+$chunk = str_repeat("A", 1024 * 1024); // 1 MB dummy
 $bytesSent = 0;
 $startTime = microtime(true);
 
-$ch = curl_init($uploadUrl);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_TIMEOUT, 45); // allow up to 45 sec total
+while (true) {
+    $ch = curl_init($uploadUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $chunk);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+    curl_exec($ch);
+    curl_close($ch);
 
-// 1 MB dummy chunk
-$chunk = str_repeat("A", 1024 * 1024);
-
-curl_setopt($ch, CURLOPT_READFUNCTION, function($ch, $fd, $length) use (&$bytesSent, $chunk, $startTime) {
-    $elapsed = microtime(true) - $startTime;
-    if ($elapsed >= 40) {
-        return ""; // stop upload
-    }
     $bytesSent += strlen($chunk);
-    return $chunk;
-});
+    $elapsed = microtime(true) - $startTime;
+    if ($elapsed >= 40) break;
+}
 
-curl_setopt($ch, CURLOPT_INFILESIZE, -1); // unknown size (streaming)
-curl_exec($ch);
-curl_close($ch);
-
-$elapsed = microtime(true) - $startTime;
-if ($bytesSent > 0 && $elapsed > 0) {
+if ($bytesSent > 0) {
     $uploadMbps = ($bytesSent * 8) / ($elapsed * 1024 * 1024);
     $result["upload_mbps"] = round($uploadMbps, 2);
 }
