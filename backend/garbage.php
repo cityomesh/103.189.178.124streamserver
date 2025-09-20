@@ -1,34 +1,25 @@
 <?php
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-
-@ini_set('zlib.output_compression', 'Off');
-@ini_set('output_buffering', 'Off');
-@ini_set('output_handler', '');
+header('Content-Type: application/octet-stream');
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
-header('Content-Type: application/octet-stream');
-header('Content-Encoding: identity');
 
-$sizeMB = isset($_GET['ckSize']) ? intval($_GET['ckSize']) : 0; 
-// If 0 → unlimited mode
+@ini_set('zlib.output_compression', '0');
+@ini_set('output_buffering', 'Off');
+@ini_set('output_handler', '');
+set_time_limit(0);
 
-$block = random_bytes(1024 * 1024); // 1MB block
-$i = 0;
+if (ob_get_level()) ob_end_clean();
 
-if ($sizeMB > 0) {
-    // Fixed size mode (old behavior)
-    for ($i = 0; $i < $sizeMB; $i++) {
-        echo $block;
-        flush();
-        if (function_exists("ob_flush")) ob_flush();
-    }
-} else {
-    // Unlimited stream mode
-    while (true) {
-        echo $block;
-        flush();
-        if (function_exists("ob_flush")) ob_flush();
-    }
+$chunkSize = 1024 * 1024; // 1 MB
+$duration  = 20;           // 20 seconds for download test
+$chunk     = str_repeat("A", $chunkSize);
+
+$startTime = microtime(true);
+
+while ((microtime(true) - $startTime) < $duration) {
+    echo $chunk;
+    if (function_exists('ob_flush')) ob_flush();
+    flush();
 }
+exit;
