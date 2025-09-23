@@ -1205,6 +1205,12 @@ body {
 </html> -->
 
 
+
+
+
+
+<!-- 
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -2707,4 +2713,1277 @@ body {
     <br/>
 </div>
 </body>
+</html> -->
+
+
+
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="shortcut icon" href="favicon.ico">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no" />
+<meta charset="UTF-8" />
+<script type="text/javascript" src="speedtest.js"></script>
+<script type="text/javascript">
+
+
+// ✅ Only clients (Main CDN తప్ప) dropdownలో fill చేయడానికి
+function initServerToServerDropdown() {
+  const serverBSelect = document.getElementById("serverB");
+  serverBSelect.innerHTML = "";
+
+  SPEEDTEST_SERVERS.forEach((server, index) => {
+    if (server.name !== "Main CDN IP") {   // ❌ exclude Main CDN
+      const option = document.createElement("option");
+      option.value = index;
+      option.textContent = server.name;
+      serverBSelect.appendChild(option);
+    }
+  });
+}
+
+
+
+  window.onload = () => {
+    setInitialIp();
+    initServers();
+    initServerToServerDropdown();
+  };
+  
+function testPing(targetIp) {
+  fetch(`http://192.168.12.103/MainCdnServer/backend/ping_server_to_server.php?to=${encodeURIComponent(targetIp)}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === "ok") {
+        document.getElementById("message").textContent =
+          `✅ Ping to ${data.target}: ${data.ping_ms} ms | DL: ${data.download_mbps} Mbps | UL: ${data.upload_mbps} Mbps`;
+        document.getElementById("message").style.color = "green";
+      } else {
+        document.getElementById("message").textContent =
+          `❌ ${data.target || targetIp} unreachable (${data.message || 'no details'})`;
+        document.getElementById("message").style.color = "red";
+      }
+    })
+    .catch(err => {
+      document.getElementById("message").textContent = "⚠️ Ping request failed";
+      document.getElementById("message").style.color = "orange";
+      console.error("testPing error:", err);
+    });
+}
+
+function pingBetweenServers() {
+    const serverA = SPEEDTEST_SERVERS[0];  
+    const serverB = SPEEDTEST_SERVERS[document.getElementById("serverB").value];
+
+    if (!serverB) {
+        I("serverToServerMsg").textContent = "❌ Please select a target server.";
+        return;
+    }
+
+    I("serverToServerMsg").textContent = `⏳ Testing ${serverA.name} → ${serverB.name} ...`;
+    I("serverToServerMsg").style.color = "black";
+
+    const backendUrl =
+        `http://103.189.178.121/streamserver/backend/pingProxy.php` +
+        `?target=192.168.12.103` +   // MainCDN Private IP
+        `&path=MainCdnServer/backend/ping_server_to_server.php` +
+        `&from=${getServerIp(serverA.server)}` +  // Source server IP
+        `&to=${getServerIp(serverB.server)}`;     // Target server IP
+
+    // Single fetch only
+    fetch(backendUrl)
+        .then(res => res.json())
+        .then(data => {
+            console.log("Server-to-Server Response:", data);
+
+            if (data.status === "ok") {
+                const testId = generateUUID();
+                I("testId").textContent = testId;
+                I("serverUsed").textContent = `${serverA.name} → ${serverB.name}`;
+                I("shareIp").textContent = `${getServerIp(serverA.server)} → ${getServerIp(serverB.server)}`;
+                I("shareDateTime").textContent = new Date().toLocaleString();
+
+                // Metrics
+                I("pingText").textContent = data.ping_ms ?? "-";
+                I("jitText").textContent = data.jitter_ms ?? "-";
+                I("dlText").textContent = data.download_mbps ?? "-";
+                I("ulText").textContent = data.upload_mbps ?? "-";
+
+                // Share panel
+                I("sharePing").textContent = I("pingText").textContent;
+                I("shareJitter").textContent = I("jitText").textContent;
+                I("shareDownload").textContent = I("dlText").textContent;
+                I("shareUpload").textContent = I("ulText").textContent;
+
+                // Success msg
+                I("serverToServerMsg").textContent = `✅ ${serverA.name} → ${serverB.name} tested successfully`;
+                I("serverToServerMsg").style.color = "white";
+                I("shareArea").style.display = "";
+            } else {
+                // API returned error
+                I("serverToServerMsg").textContent =
+                    `❌ ${serverA.name} → ${serverB.name} unreachable: ${data.message}`;
+                I("serverToServerMsg").style.color = "red";
+            }
+
+            // Reset button color
+            document.querySelector("button[onclick='pingBetweenServers()']").style.background = "#007bff";
+        })
+        .catch(err => {
+            console.error("Proxy Fetch Error:", err);
+            I("serverToServerMsg").textContent = "⚠️ Server-to-server test failed (Proxy error)";
+            I("serverToServerMsg").style.color = "orange";
+            document.querySelector("button[onclick='pingBetweenServers()']").style.background = "#007bff";
+        });
+}
+
+
+function getEffectiveServer(originalServer) {
+  return originalServer;
+}
+
+const currentOrigin = window.location.origin;
+console.log("✅ Running from:", currentOrigin);
+
+function getServerIp(serverUrl) {
+    let ip = serverUrl
+        .replace("http://", "")
+        .replace("https://", "")
+        .replace("//", "")
+        .split("/")[0]; // Take only before first "/" → gives only IP
+    return ip;
+}
+
+async function setInitialIp() {
+  try {
+    // Localhost case
+    if (
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
+    ) {
+      I("ip").textContent = "localhost (127.0.0.1)";
+      return;
+    }
+
+    // ✅ Fetch actual server IP dynamically
+    const res = await fetch("backend/getIP.php");
+    const data = await res.json(); // JSON response ni parse cheyali
+
+    // processedString lo ip untundhi
+    const ip = data.processedString?.trim();
+
+    // Fallback: hostname
+    I("ip").textContent = ip || window.location.hostname;
+  } catch (err) {
+    console.error("❌ Could not fetch server IP:", err);
+    I("ip").textContent = window.location.hostname;
+  }
+}
+
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+function I(i){return document.getElementById(i);}
+
+
+var SPEEDTEST_SERVERS = [
+   //{
+   // name: "Main CDN IP",
+    //server: "//192.168.12.103/",   // correct format
+    //dlURL: "backend/garbage.php",
+    //ulURL: "backend/empty.php",
+    //pingURL: "backend/empty.php",
+    //getIpURL: "backend/getIP.php"
+  //},
+  {
+    name: "Main CDN IP",
+    server: "//192.168.12.103/",   // correct format
+    dlURL: "backend/garbage.php",
+    ulURL: "backend/empty.php",
+    pingURL: "backend/empty.php",
+    getIpURL: "backend/getIP.php"
+  },
+
+    {
+    name: "CDN DSN3",
+    server: "//10.6.6.165/",
+    dlURL: "backend/garbage.php",
+    ulURL: "backend/empty.php",
+    pingURL: "backend/empty.php",
+    getIpURL: "backend/getIP.php"
+  },
+    {
+    name: "BLCRDHE EDGECDN1006",
+    server: "//10.7.7.252/",
+    dlURL: "backend/garbage.php",
+    ulURL: "backend/empty.php",
+    pingURL: "backend/empty.php",
+    getIpURL: "backend/getIP.php"
+  },
+   {
+    name: "KAMALAMILLSHATHWAY1007",
+    server: "//172.31.42.2/",
+    dlURL: "backend/garbage.php",
+    ulURL: "backend/empty.php",
+    pingURL: "backend/empty.php",
+    getIpURL: "backend/getIP.php"
+  },
+    {
+    name: "HYDERABAD EDGECDN1008",
+    server: "//172.31.32.2/",
+    dlURL: "backend/garbage.php",
+    ulURL: "backend/empty.php",
+    pingURL: "backend/empty.php",
+    getIpURL: "backend/getIP.php"
+  },
+   {
+    name: "KANPUR EXCITEL",
+    server: "//172.29.3.178/",
+    dlURL: "backend/garbage.php",
+    ulURL: "backend/empty.php",
+    pingURL: "backend/empty.php",
+    getIpURL: "backend/getIP.php"
+  },
+      {
+    name: "Testing",
+    server: "//192.168.12.53/",
+    dlURL: "backend/garbage.php",
+    ulURL: "backend/empty.php",
+    pingURL: "backend/empty.php",
+    getIpURL: "backend/getIP.php"
+  },
+];
+
+
+const CLIENTS = [
+  { name: "CDN DSN3", ip: "10.6.6.165" },
+  { name: "BLCRDHE EDGECDN1006", ip: "10.7.7.252" },
+  { name: "KAMALAMILLSHATHWAY1007", ip: "172.31.42.2" },
+  { name: "HYDERABAD EDGECDN1008", ip: "172.31.32.2" },
+  { name: "KANPUR EXCITEL", ip: "172.29.3.178" },
+  { name: "Testing", ip: "192.168.12.53" }
+];
+// ✅ Add ping() function here
+async function testPing(server) {
+  try {
+    const start = performance.now();
+    const res = await fetch(server.server + server.pingURL + "?r=" + Math.random(), { cache: "no-store" });
+    await res.text(); // ignore content, just to complete request
+    const end = performance.now();
+    console.log(`Ping to ${server.name}: ${Math.round(end - start)} ms`);
+  } catch (e) {
+    console.error("Ping failed:", e);
+  }
+}
+
+
+async function testAllServers() {
+  for (const server of SPEEDTEST_SERVERS) {
+    await testPing(server);  // ✅ correct function call
+  }
+}
+
+
+// Call before starting test
+testAllServers();
+testPing(SPEEDTEST_SERVERS[0]); // ✅ Main CDN server test
+
+var s=new Speedtest(); //create speed test object
+s.setParameter("telemetry_level","basic"); //enable basic telemetry (for results sharing)
+
+
+function initServers() {
+  if (SPEEDTEST_SERVERS.length == 0) {
+    I("loading").className = "hidden";
+    I("serverArea").style.display = "none";
+    I("testWrapper").className = "visible";
+    initUI();
+  } else {
+    var noServersAvailable = function () {
+      I("message").innerHTML = "No servers available";
+    };
+
+    var runServerSelect = function () {
+      const preferredIndex = 0; // ✅ Main CDN Server ఎప్పుడూ మొదటి index
+      const selectedServer = SPEEDTEST_SERVERS[preferredIndex];
+
+      // Set the server manually without selectServer() ping logic
+      s.setSelectedServer(selectedServer);
+      I("loading").className = "hidden";
+
+      // ✅ Clear old options before appending
+      I("server").innerHTML = "";
+      I("serverB").innerHTML = "<option value=''>-- Select To --</option>";
+
+      // Main client-server dropdown populate చేయడం
+      for (var i = 0; i < SPEEDTEST_SERVERS.length; i++) {
+        var option = document.createElement("option");
+        option.value = i;
+        option.textContent = SPEEDTEST_SERVERS[i].name;
+        if (i === preferredIndex) option.selected = true;
+        I("server").appendChild(option);
+
+        // ✅ Only To (serverB) లో options append చేయాలి
+        if (i !== preferredIndex) {
+          var optB = document.createElement("option");
+          optB.value = i;
+          optB.textContent = SPEEDTEST_SERVERS[i].name;
+          I("serverB").appendChild(optB);
+        }
+      }
+
+      // ✅ From (serverA) ఎప్పుడూ Main CDN Server మాత్రమే చూపాలి
+      I("serverAName").textContent = SPEEDTEST_SERVERS[preferredIndex].name;
+
+      // Set ping result initially
+      onServerChange();
+
+      // Show test UI
+      I("testWrapper").className = "visible";
+      initUI();
+    };
+
+    if (typeof SPEEDTEST_SERVERS === "string") {
+      s.loadServerList(SPEEDTEST_SERVERS, function (servers) {
+        if (servers == null) {
+          noServersAvailable();
+        } else {
+          SPEEDTEST_SERVERS = servers;
+          runServerSelect();
+        }
+      });
+    } else {
+      s.addTestPoints(SPEEDTEST_SERVERS);
+      runServerSelect();
+    }
+  }
+}
+
+function checkAllZeroAfterTest() {
+    setTimeout(() => {
+        const pingValue = parseFloat(document.getElementById("pingText").textContent) || 0;
+        const jitterValue = parseFloat(document.getElementById("jitText").textContent) || 0;
+        const dlValue = parseFloat(document.getElementById("dlText").textContent) || 0;
+        const ulValue = parseFloat(document.getElementById("ulText").textContent) || 0;
+
+        if (pingValue === 0 && jitterValue === 0 && dlValue === 0 && ulValue === 0) {
+            const errEl = document.getElementById("errorMessage");
+            errEl.textContent = "❌ Connection Failed or Server Down. Try another server.";
+            errEl.style.display = "block";
+            errEl.style.color = "red";
+            errEl.style.fontSize = "18px";
+            errEl.style.fontWeight = "bold";
+
+            // 5 seconds taruvata error hide + reset
+            setTimeout(() => {
+                errEl.style.display = "none";
+                resetTestState();
+            }, 5000);
+        }
+    }, 5000); 
+}
+
+
+function checkClientPings() {
+  const resultsDiv = document.getElementById("clientPingResults");
+  resultsDiv.innerHTML = ""; // reset previous results
+
+  CLIENTS.forEach(client => {
+    fetch(`http://192.168.12.103/MainCdnServer/backend/ping_clients.php?target=${encodeURIComponent(client.ip)}`)
+      .then(res => res.json())
+      .then(data => {
+        console.log(`✅ ${client.name} (${client.ip}) Ping Results:`, data);
+
+        const p = document.createElement("p");
+        if (data.status === "ok") {
+          p.textContent = `✅ ${client.name} (${client.ip}) → ${data.latency_ms} ms`;
+          p.style.color = "green";
+        } else {
+          p.textContent = `❌ ${client.name} (${client.ip}) → DOWN`;
+          p.style.color = "red";
+        }
+        resultsDiv.appendChild(p);
+      })
+      .catch(err => {
+        console.error(`❌ ${client.name} (${client.ip}) Ping check failed:`, err);
+
+        const p = document.createElement("p");
+        p.textContent = `❌ ${client.name} (${client.ip}) → Fetch Failed`;
+        p.style.color = "red";
+        resultsDiv.appendChild(p);
+      });
+  });
+}
+
+function resetTestState() {
+    try { stopTest(); } catch(e) {}
+    document.getElementById("startStopBtn").classList.remove("running");
+
+    document.getElementById("pingText").textContent = "";
+    document.getElementById("jitText").textContent = "";
+    document.getElementById("dlText").textContent = "";
+    document.getElementById("ulText").textContent = "";
+
+    // ✅ Reset server dropdown to default
+    const serverDropdown = document.getElementById("server");
+    if (serverDropdown.options.length > 0) {
+        serverDropdown.selectedIndex = 0; // first option as default
+    }
+
+    // ✅ Enable dropdown again after reset
+    serverDropdown.disabled = false;
+}
+
+function onServerChange() {
+  const selectedIndex = document.getElementById("server").value;
+  const selectedServer = SPEEDTEST_SERVERS[selectedIndex];
+  const serverIp = getServerIp(selectedServer.server); // direct IP
+
+  // Always hit Main CDN to check latency
+  const pingURL = `http://192.168.12.103/MainCdnServer/backend/ping_server.php?target=${encodeURIComponent(serverIp)}&t=${Math.random()}`;
+
+  fetch(pingURL, { method: "GET", cache: "no-cache" })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === "ok") {
+        document.getElementById("startStopBtn").disabled = false;
+        document.getElementById("ip").textContent = serverIp;
+
+        document.getElementById("message").textContent =
+          `✅ ${selectedServer.name} reachable, avg ${data.avg_ms} ms`;
+        document.getElementById("message").style.color = "green";
+
+        console.log(`✅ ${selectedServer.name} reachable through Main CDN`);
+      } else {
+        document.getElementById("message").textContent =
+          `❌ ${selectedServer.name} unreachable`;
+        document.getElementById("message").style.color = "red";
+        document.getElementById("startStopBtn").disabled = true;
+      }
+    })
+    .catch(() => {
+      document.getElementById("message").textContent =
+        "⚠️ Ping request failed — check backend.";
+      document.getElementById("message").style.color = "orange";
+      document.getElementById("startStopBtn").disabled = true;
+    });
+
+  // Speedtest.js lo server select cheyadam
+  s.setSelectedServer(selectedServer);
+
+  // Extra ping test
+  testPing(serverIp);
+}
+
+
+var meterBk=/Trident.*rv:(\d+\.\d+)/i.test(navigator.userAgent)?"#EAEAEA":"#ffffff";
+var dlColor="#0d47a1";
+  ulColor="#0d47a1";
+var progColor=meterBk;
+
+//CODE FOR GAUGES
+function drawMeter(c,amount,bk,fg,progress,prog){
+  var ctx=c.getContext("2d");
+  var dp=window.devicePixelRatio||1;
+  var cw=c.clientWidth*dp, ch=c.clientHeight*dp;
+  var sizScale=ch*0.0055;
+  if(c.width==cw&&c.height==ch){
+    ctx.clearRect(0,0,cw,ch);
+  }else{
+    c.width=cw;
+    c.height=ch;
+  }
+  ctx.beginPath();
+  ctx.strokeStyle=bk;
+  ctx.lineWidth=12*sizScale;
+  ctx.arc(c.width/2,c.height-58*sizScale,c.height/1.8-ctx.lineWidth,-Math.PI*1.1,Math.PI*0.1);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.strokeStyle=fg;
+  ctx.lineWidth=12*sizScale;
+  ctx.arc(c.width/2,c.height-58*sizScale,c.height/1.8-ctx.lineWidth,-Math.PI*1.1,amount*Math.PI*1.2-Math.PI*1.1);
+  ctx.stroke();
+  if(typeof progress !== "undefined"){
+    ctx.fillStyle=prog;
+    ctx.fillRect(c.width*0.3,c.height-16*sizScale,c.width*0.4*progress,4*sizScale);
+  }
+}
+function mbpsToAmount(s){
+  return 1-(1/(Math.pow(1.3,Math.sqrt(s))));
+}
+function format(d){
+    d=Number(d);
+    if(d<10) return d.toFixed(2);
+    if(d<100) return d.toFixed(1);
+    return d.toFixed(0);
+}
+
+//UI CODE
+var uiData = null;
+
+function startStop() {
+  if (s.getState() == 3) {
+    // speed test is running, abort
+    s.abort();
+    data = null;
+    I("startStopBtn").className = "";
+    I("server").disabled = false;
+    initUI();
+  } else {
+    // test is not running, begin
+    I("startStopBtn").className = "running";
+    I("shareArea").style.display = "none";
+    I("server").disabled = true;
+
+    setInitialIp(); // ✅ Use updated version
+
+    // Clear old error
+    I("message").textContent = "";
+    I("message").style.color = "";
+
+    s.onupdate = function (data) {
+      uiData = data;
+    };
+
+    s.onend = async function (aborted) {
+      console.log("Test Ended", aborted, uiData);
+
+      I("startStopBtn").className = "";
+      I("server").disabled = false;
+      updateUI(true);
+
+      if (!aborted && (!uiData || !uiData.dlStatus)) {
+        I("message").textContent =
+          "❌ Server Down — Please select another server.";
+        I("message").style.color = "red";
+        // I("shareArea").style.display = "none";
+        return;
+      }
+
+      if (!aborted) {
+        let testId,
+          ip,
+          ping,
+          jitter,
+          download,
+          upload,
+          selectedServer;
+
+        try {
+          testId = uiData.testId || generateUUID();
+          ping = format(uiData.pingStatus || 0);
+          jitter = format(uiData.jitterStatus || 0);
+          download = format(uiData.dlStatus || 0);
+          upload = format(uiData.ulStatus || 0);
+          selectedServer = s.getSelectedServer();
+
+          // ✅ Server IP instead of client IP
+          ip = selectedServer.server
+            .replace("http://", "")
+            .replace("https://", "")
+            .replace(/\/$/, "");
+
+          // 🟢 Local vs Server check
+          let hostUsed = "";
+          if (
+            window.location.hostname === "localhost" ||
+            window.location.hostname === "127.0.0.1"
+          ) {
+            hostUsed = "http://localhost/";
+          } else {
+            hostUsed = window.location.origin + "/";
+          }
+
+          // UI Display
+          if (testId && testId !== "N/A") {
+            I("testId").textContent = testId;
+          } else {
+            I("testId").parentElement.style.display = "none";
+          }
+
+          if (selectedServer) {
+            I("serverUsed").textContent =
+              hostUsed + " → " + selectedServer.name;
+          }
+
+          I("shareIp").textContent = ip;
+          I("sharePing").textContent = ping;
+          I("shareJitter").textContent = jitter;
+          I("shareDownload").textContent = download;
+          I("shareUpload").textContent = upload;
+
+          const now = new Date();
+          I("shareDateTime").textContent = now.toLocaleString();
+
+          I("shareArea").style.display = "";
+        } catch (e) {
+          console.error("Error populating share area:", e);
+          return;
+        }
+
+        // ✅ API call remains same
+        const payload = {
+          test_id: testId,
+          ip_address: ip,
+          ping,
+          jitter,
+          download_speed: download,
+          upload_speed: upload,
+          server: selectedServer?.name || "Unknown",
+          datetime: new Date().toISOString(),
+        };
+
+        // ✅ Save results to Main CDN server
+        fetch(
+          "http://192.168.12.103/MainCdnServer/backend/save_results.php",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }
+        )
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Results saved to server:", data);
+          })
+          .catch((error) => {
+            console.error("Saving results failed:", error);
+          });
+
+        // 🔥 EXTRA: Server-to-Server check
+        try {
+          const res = await fetch(
+            "http://192.168.12.103/MainCdnServer/backend/ping_server_to_server.php?to=" +
+              ip
+          );
+          const data = await res.json();
+          console.log("Server-to-server result:", data);
+
+          if (data.status === "ok") {
+            // ✅ Update values from backend
+            I("sharePing").textContent = data.ping_ms + " ms";
+            I("shareJitter").textContent = data.jitter_ms + " ms";
+            I("shareDownload").textContent = data.download_mbps + " Mbps";
+            I("shareUpload").textContent = data.upload_mbps + " Mbps";
+
+            // ✅ Merge into payload
+            payload.ping = data.ping_ms;
+            payload.jitter = data.jitter_ms;
+            payload.download_speed = data.download_mbps;
+            payload.upload_speed = data.upload_mbps;
+          }
+
+          // ✅ Re-save with server-to-server results
+          fetch(
+            "http://192.168.12.103/MainCdnServer/backend/save_results.php",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            }
+          )
+            .then((response) => response.json())
+            .then((data) => {
+              console.log(
+                "Updated results with server-to-server:",
+                data
+              );
+            })
+            .catch((error) => {
+              console.error("Re-saving results failed:", error);
+            });
+        } catch (err) {
+          console.error("Server-to-server fetch failed:", err);
+        }
+      }
+    };
+
+    function getServerIp(serverUrl) {
+      let ip = serverUrl
+        .replace("http://", "")
+        .replace("https://", "")
+        .replace("//", "");
+
+      // Take only before first "/" → gives only IP
+      ip = ip.split("/")[0];
+
+      console.log("getServerIp(", serverUrl, ") ->", ip);
+      return ip;
+    }
+    s.start();
+    checkAllZeroAfterTest();
+  }
+}
+
+
+//this function reads the data sent back by the test and updates the UI
+function updateUI(forced){
+  if(!forced && s.getState()!=3) return;
+  if(uiData==null) return;
+  var status=uiData.testState;
+
+  I("dlText").textContent = (status==1 && uiData.dlStatus==0) ? "..." : format(uiData.dlStatus);
+  drawMeter(I("dlMeter"), mbpsToAmount(Number(uiData.dlStatus*(status==1?oscillate():1))), meterBk, dlColor, Number(uiData.dlProgress), progColor);
+
+  I("ulText").textContent = (status==3 && uiData.ulStatus==0) ? "..." : format(uiData.ulStatus);
+  drawMeter(I("ulMeter"), mbpsToAmount(Number(uiData.dlStatus*(status==3?oscillate():1))), meterBk, dlColor, Number(uiData.dlProgress), progColor);
+
+  I("pingText").textContent = format(uiData.pingStatus);
+  I("jitText").textContent = format(uiData.jitterStatus);
+}
+
+function oscillate(){
+  return 1+0.02*Math.sin(Date.now()/100);
+}
+//update the UI every frame
+window.requestAnimationFrame=window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||window.msRequestAnimationFrame||(function(callback,element){setTimeout(callback,1000/60);});
+function frame(){
+  requestAnimationFrame(frame);
+  updateUI();
+}
+frame(); //start frame loop
+//function to (re)initialize UI
+function initUI(){
+  drawMeter(I("dlMeter"),0,meterBk,dlColor,0);
+  drawMeter(I("ulMeter"),0,meterBk,ulColor,0);
+  I("dlText").textContent="";
+  I("ulText").textContent="";
+  I("pingText").textContent="";
+  I("jitText").textContent="";
+  I("ip").textContent="";
+}
+</script>
+<style type="text/css">
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    /* ✅ Full background image */
+    background: url("den_1920x1080.png") no-repeat center center fixed;
+    background-size: cover;
+    color: rgb(184, 147, 147);
+  }
+  body{
+    text-align:center;
+    font-family:"Roboto",sans-serif;
+  }
+  h1{
+    color:#404040;
+  }
+  #loading{
+    background-color:#FFFFFF;
+    color:#404040;
+    text-align:center;
+  }
+
+  h1 {
+    color: #f7f7fb; /* White color */
+    font-size: 2em; /* Larger text */
+    font-weight: bold; /* Bold text */
+    text-transform: uppercase; /* Uppercase text */
+    text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.5); /* Shadow effect */
+  }
+
+  h2 {
+    color: #070707; /* White color */
+    font-size: 0.80em; /* Larger text */
+    font-weight: bold; /* Bold text */
+    text-transform: uppercase; /* Uppercase text */
+    text-shadow: 3px 3px 5px rgba(21, 15, 15, 0.5); /* Shadow effect */
+  }
+  span.loadCircle{
+    display:inline-block;
+    width:2em;
+    height:2em;
+    vertical-align:middle;
+    background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAP1BMVEUAAAB2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZyFzwnAAAAFHRSTlMAEvRFvX406baecwbf0casimhSHyiwmqgAAADpSURBVHja7dbJbQMxAENRahnN5lkc//5rDRAkDeRgHszXgACJoKiIiIiIiIiIiIiIiIiIiIj4HHspsrpAVhdVVguzrA4OWc10WcEqpwKbnBo0OU1Q5NSpsoJFTgOecrrdEag85DRgktNqfoEdTjnd7hrEHMEJvmRUYJbTYk5Agy6nau6Abp5Cm7mDBtRdPi9gyKdU7w4p1fsLvyqs8hl4z9/w3n/Hmr9WoQ65lAU4d7lMYOz//QboRR5jBZibLMZdAR6O/Vfa1PlxNr3XdS3HzK/HVPRu/KnLs8iAOh993VpRRERERMT/fAN60wwWaVyWwAAAAABJRU5ErkJggg==');
+    background-size:2em 2em;
+    margin-right:0.5em;
+    animation: spin 0.6s linear infinite;
+  }
+  @keyframes spin{
+    0%{transform:rotate(0deg);}
+    100%{transform:rotate(359deg);}
+  }
+  #startStopBtn{
+    display:inline-block;
+    color:#fdf7f7;
+    background-color:#ee4f57;
+    border:0.15em solid #f5f5fb;
+    border-radius:0.3em;
+    transition:all 0.3s;
+    box-sizing:border-box;
+    width:6em; height:2em;
+    line-height:1.8em;
+    cursor:pointer;
+    text-align:center;
+}
+#startStopBtn:hover{
+    box-shadow: 0 0 2em rgba(237, 240, 239, 0.1), inset 0 0 1em rgba(248, 247, 247, 0.1);
+}
+#startStopBtn.running{
+    background-color:#7df479;
+    border-color:#9af295;
+    color:#FFFFFF;
+}
+#startStopBtn:before{
+    content:"Start";
+}
+#startStopBtn.running:before{
+    content:"Abort";
+
+
+  }
+  
+  #serverArea{
+    margin-top:1em;
+    color: #0b0b0b;
+    font-size:1.4em;
+  }
+  #server{
+    font-size:1em;
+    padding:0.2em;
+  }
+  #test{
+    margin-top:2em;
+    margin-bottom:12em;
+  }
+  #ipArea {
+    color: rgb(69, 107, 231);
+  font-size: 1.4em;
+  }
+  div.testArea{
+    display:inline-block;
+    width:16em;
+    height:12.5em;
+    position:relative;
+    box-sizing:border-box;
+  }
+  div.testArea2{
+    display:inline-block;
+    width:14em;
+    height:7em;
+    position:relative;
+    box-sizing:border-box;
+    text-align:center;
+  }
+  div.testArea div.testName {
+  position: absolute;
+  top: 0.1em;
+  left: 0;
+  width: 100%;
+  font-size: 1.4em;
+  z-index: 9;
+  color: #d8d2ed; /* ✅ White text */
+  }
+  div.testArea2 div.testName {
+    display: block; /* ✅ Corrected from 'white' to 'block' */
+    text-align: center;
+    font-size: 1.4em;
+  color: #d8d2ed; /* ✅ White text */
+  }
+  div.testArea div.meterText {
+  position: absolute;
+  bottom: 1.55em;
+  left: 0;
+  width: 100%;
+  font-size: 2.5em;
+  z-index: 9;
+  color: #d8d2ed; /* ✅ White text */
+  }
+
+  div.testArea2 div.meterText {
+    display: inline-block;
+    font-size: 2.5em;
+  color: #d8d2ed; /* ✅ White text */
+  }
+
+  div.meterText:empty:before {
+    content: "0.00";
+  }
+
+  div.testArea div.unit{
+    position:absolute;
+    bottom:2em; left:0;
+    width:100%;
+    z-index:9;
+    color: #ffffff; /* ✅ White text */
+  }
+  div.testArea2 div.unit{
+    display:inline-block;
+    color: #ffffff; /* ✅ White text */
+
+  }
+  div.testArea canvas{
+    position:absolute;
+    top:0; left:0; width:100%; height:100%;
+    z-index:1;
+  }
+  div.testGroup{
+    display:block;
+        margin: 0 auto;
+  }
+  #shareArea {
+  width: 95%;
+  max-width: 40em;
+  margin: 2em auto;
+  padding: 1.5em;
+  background-color: #fdf9f9; /* light background */
+  border: 2px solid #ee4f57;  /* red border */
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* subtle shadow */
+  color: #f8f4f4; /* dark text */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  transition: all 0.3s ease-in-out;
+}
+
+#shareArea > * {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0.5em 0;
+}
+
+#shareArea h3 {
+  color: #ee4f57; /* headline color */
+  font-size: 1.5em;
+  margin-bottom: 1em;
+  text-align: center;
+  border-bottom: 2px dashed #ee4f57;
+  padding-bottom: 0.5em;
+}
+
+#shareArea p {
+  font-size: 1.1em;
+  color: #333;
+  line-height: 1.4;
+}
+
+#shareArea span {
+  font-weight: 600;
+  color: #0d47a1; /* dark blue for values */
+}
+
+#resultsURL {
+  padding: 0.5em;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1em;
+  color: #222;
+  background-color: #fff;
+}
+
+#resultsImg {
+  margin-top: 1em;
+  max-width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+  #privacyPolicy{
+        position:fixed;
+        top:2em;
+        bottom:2em;
+        left:2em;
+        right:2em;
+        overflow-y:auto;
+        width:auto;
+        height:auto;
+        box-shadow:0 0 3em 1em #000000;
+        z-index:999999;
+        text-align:left;
+        background-color:#FFFFFF;
+        padding:1em;
+  }
+  a.privacy{
+        text-align:center;
+        font-size:0.8em;
+        color:#808080;
+        padding: 0 3em;
+  }
+    div.closePrivacyPolicy {
+        width: 100%;
+        text-align: center;
+    }
+    div.closePrivacyPolicy a.privacy {
+        padding: 1em 3em;
+    }
+  @media all and (max-width:40em){
+    body{
+      font-size:0.8em;
+    }
+  }
+  div.visible{
+    animation: fadeIn 0.4s;
+    display:block;
+  }
+  div.hidden{
+    animation: fadeOut 0.4s;
+    display:none;
+  }
+  @keyframes fadeIn{
+    0%{
+      opacity:0;
+    }
+    100%{
+      opacity:1;
+    }
+  }
+  @keyframes fadeOut{
+    0%{
+      display:block;
+      opacity:1;
+    }
+    100%{
+      display:block;
+      opacity:0;
+    }
+  }
+  @media all and (prefers-color-scheme: dark){
+    html,body,#loading{
+      background:#202020;
+      color:#F4F4F4;
+      color-scheme:dark;
+    }
+    h1{
+      color:#E0E0E0;
+    }
+    a{
+      color:#9090FF;
+    }
+    #privacyPolicy{
+      background:#000000;
+    }
+    #resultsImg{
+      filter: invert(1);
+    }
+  }
+</style>
+<title>NetWork Diagnostics</title>
+</head>
+
+<body onload="initServers()">
+
+
+
+  <script>
+    if (localStorage.getItem("loggedIn") !== "true") {
+      window.location.href = "login.html"; // Login page ki pampu
+    }
+  </script>
+  
+    <div style="width: 95%; display: flex; justify-content: flex-end; padding: 20px;">
+    <button onclick="logout()" style="
+      padding: 12px 24px;
+      font-size: 1.1rem;
+      background-color: #ee4f57;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    ">Logout</button>
+    </div>
+  
+    <script>
+    function checkLogin() {
+      if (localStorage.getItem("loggedIn") !== "true") {
+      window.location.href = "index.html";
+      } else {
+      document.getElementById("username").textContent =
+        localStorage.getItem("username") || "User";
+      }
+    }
+  
+    function logout() {
+      localStorage.clear();
+      window.location.href = "index.html";
+    }
+    </script>
+    
+  <div id="logo">
+    <img src="removebg-preview.png" alt="ULKA TV Logo" style="height: 150px; width: 350px; margin-top: 30px;"/>
+  </div>
+    
+    	<h1>NetWork Diagnostics</h1>
+      <div id="loading" class="visible">
+        <p id="message"><span class="loadCircle"></span>Selecting a server...</p>
+      </div>
+      <div id="testWrapper" class="hidden">
+        <a class="privacy" href="#" onclick="I('privacyPolicy').style.display=''">Privacy</a>
+
+        <div id="serverArea" 
+          style="display:flex; justify-content:center; align-items:center; gap:15px; margin-top:20px;">
+            <div style="display:flex; flex-direction:column; align-items:center;">
+              <label for="server" style="font-weight:bold; color:rgb(244, 235, 235); font-size:18px; margin-top:13px;">Connected Device</label>
+              <span style="font-size:16px; color:rgb(242, 232, 232);">(Laptop / Mobile / Others)</span>
+            </div>
+            <select id="server" onchange="onServerChange()" style="padding:5px; font-size:14px;"></select>
+          <div id="startStopBtn" onclick="startStop()"></div>
+        </div>
+
+        <div id="pingResult" style="color: rgb(207, 182, 182); margin-top: 5px; text-align:center;"></div> 
+        <div id="errorMessage" style="margin-top:15px; font-weight:bold; color:red; display:none; text-align:center;"></div>
+      </div>
+
+
+      <!-- <h3 style="font-size:22px; font-weight:bold; color:rgb(243, 238, 238); margin-bottom:15px;">
+        Server ↔ Server Ping
+      </h3>
+
+		<div id="serverToServerArea" style="margin-top:30px;">
+      <label for="serverA" style="font-size:15px; font-weight:bold; color:rgb(245, 231, 231);">From:</label>
+      <select id="serverA" style="font-size:15px; padding:5px; margin-left:5px;"></select>
+
+      <label for="serverB" style="font-size:15px; font-weight:bold; color:rgb(220, 207, 207); margin-left:20px;">To:</label>
+      <select id="serverB" style="font-size:15px; padding:5px; margin-left:5px;"></select>
+
+			 <button 
+        onclick="pingBetweenServers()" 
+        style="margin-left:20px; font-size:18px; padding:8px 15px; background:#ee4624; color:white; border:none; border-radius:6px; cursor:pointer;">
+        Start
+      </button>
+
+      <p id="serverToServerMsg" style="margin-top:15px; font-size:18px; font-weight:bold; color:black;"></p>
+    </div> -->
+
+
+
+    <h3 style="font-size:22px; font-weight:bold; color:rgb(243, 238, 238); margin-bottom:15px;">
+      Server ↔ Server Ping
+    </h3>
+    <div id="serverToServerArea" style="margin-top:30px;">
+      <label for="serverA" style="font-size:15px; font-weight:bold; color:rgb(245, 231, 231);">From:</label>
+        <button 
+          id="serverAName"
+          style="font-size:15px; padding:6px 12px; margin-left:5px; font-weight:bold; color:#333; background:white; border:1px solid #ccc; border-radius:6px; cursor:default;">
+          Main CDN Server
+      </button>
+      <label for="serverB" style="font-size:15px; font-weight:bold; color:rgb(220, 207, 207); margin-left:20px;">To:</label>
+      <select id="serverB" style="font-size:15px; padding:5px; margin-left:5px;"></select>
+
+      <button 
+        onclick="pingBetweenServers()" 
+        style="margin-left:20px; font-size:18px; padding:8px 15px; background:#ee4624; color:white; border:none; border-radius:6px; cursor:pointer;">
+        Start
+      </button>
+
+      <p id="serverToServerMsg" style="margin-top:15px; font-size:18px; font-weight:bold; color:black;"></p>
+    </div>
+
+
+  <div id="test">
+    <div class="testGroup">
+            <div class="testArea2">
+        <div class="testName">Ping</div>
+        <div id="pingText" class="meterText" style="color:#f5ebeb"></div>
+        <div class="unit">ms</div>
+      </div>
+      <div class="testArea2">
+        <div class="testName">Jitter</div>
+        <div id="jitText" class="meterText" style="color:#f5ebeb"></div>
+        <div class="unit">ms</div>
+      </div>
+    </div>
+		<div class="testGroup">
+			<div class="testArea">
+				<div class="testName">Download</div>
+				<canvas id="dlMeter" class="meter"></canvas>
+				<div id="dlText" class="meterText"></div>
+				<div class="unit">Mbit/s</div>
+			</div>
+			<div class="testArea">
+				<div class="testName">Upload</div>
+				<canvas id="ulMeter" class="meter"></canvas>
+				<div id="ulText" class="meterText"></div>
+				<div class="unit">Mbit/s</div>
+			</div>
+		</div>
+		<div id="ipArea">
+			<span id="ip"></span>
+		</div>
+		<div id="shareArea" style="display:none">
+			<h3>Results</h3>
+			<p><strong>Test ID:</strong> <span id="testId"></span></p>
+			<p><strong>Server Used:</strong> <span id="serverUsed"></span></p>
+
+			<p><strong>IP Address:</strong> <span id="shareIp"></span></p>
+			<p><strong>Ping:</strong> <span id="sharePing"></span> ms</p>
+			<p><strong>Jitter:</strong> <span id="shareJitter"></span> ms</p>
+			<p><strong>Download Speed:</strong> <span id="shareDownload"></span> Mbps</p>
+			<p><strong>Upload Speed:</strong> <span id="shareUpload"></span> Mbps</p>
+		    <p><strong>Date &amp; Time:</strong> <span id="shareDateTime"></span></p>
+		</div>
+	</div>
+
+  <div id="mainContainer" style="display: flex; align-items: flex-start; justify-content: center; flex-wrap: wrap;">
+    <div id="textBlock" style="
+      max-width: full;
+      color: rgb(19, 18, 18);
+      border-radius: 8px;
+      margin-top: -160px;
+      font-size: 1.6rem;
+    ">
+      <h2>
+        This tool helps you to check the current Network Status of the Streaming server assigned to your device.
+      <p>Use it to ensure your connection is stable for uninterrupted StreamTv+ tvchannels.</p>
+      </h2>
+    </div>
+  </div>
+</div>
+
+  
+<div id="privacyPolicy" style="display:none">
+    <h2>Privacy Policy</h2>
+    <p>This HTML5 speed test server is configured with telemetry enabled.</p>
+    <h4>What data we collect</h4>
+    <p>
+        At the end of the test, the following data is collected and stored:
+        <ul>
+            <li>Test ID</li>
+            <li>Time of testing</li>
+            <li>Test results (download and upload speed, ping and jitter)</li>
+            <li>IP address</li>
+            <li>ISP information</li>
+            <li>Approximate location (inferred from IP address, not GPS)</li>
+            <li>User agent and browser locale</li>
+            <li>Test log (contains no personal information)</li>
+        </ul>
+    </p>
+    <h4>How we use the data</h4>
+    <p>
+        Data collected through this service is used to:
+        <ul>
+            <li>Allow sharing of test results (sharable image for forums, etc.)</li>
+            <li>To improve the service offered to you (for instance, to detect problems on our side)</li>
+        </ul>
+        No personal information is disclosed to third parties.
+    </p>
+    <h4>Your consent</h4>
+    <p>
+        By starting the test, you consent to the terms of this privacy policy.
+    </p>
+    <h4>Data removal</h4>
+    <p>
+        If you want to have your information deleted, you need to provide either the ID of the test or your IP address. This is the only way to identify your data, without this information we won't be able to comply with your request.<br/><br/>
+        Contact this email address for all deletion requests: <a href="mailto:PUT@YOUR_EMAIL.HERE">TO BE FILLED BY DEVELOPER</a>.
+    </p>
+    <br/><br/>
+    <div class="closePrivacyPolicy">
+        <a class="privacy" href="#" onclick="I('privacyPolicy').style.display='none'">Close</a>
+    </div>
+    <br/>
+</div>
+</body>
 </html>
+
+
