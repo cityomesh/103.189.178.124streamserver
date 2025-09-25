@@ -1563,7 +1563,7 @@ function initServers() {
 
       // ✅ Clear old options before appending
       I("server").innerHTML = "";
-      I("serverB").innerHTML = "<option value=''>-- Select To Cdn's--</option>";
+      I("serverB").innerHTML = "<option value=''>-- Select Cdn's--</option>";
 
       // Main client-server dropdown populate చేయడం
       for (var i = 0; i < SPEEDTEST_SERVERS.length; i++) {
@@ -2346,86 +2346,6 @@ body {
     content: "Abort";
 }
 
-/* Mobile view only (max-width 768px) */
-/* @media screen and (max-width: 768px) {
-  #testWrapper,
-  #serverToServerArea {
-    max-width: 100% !important;
-    margin: 0 auto !important;
-    padding: 0 10px;
-  }
-
-  h3 {
-    font-size: 20px !important;
-    margin: 0 0 10px 0 !important;
-    text-align: center !important;
-  }
-
-  #serverArea,
-  #serverToServerArea {
-    flex-direction: column !important;
-    align-items: center !important;
-  }
-
-  #serverArea > div:first-child,
-  #serverToServerArea > div:first-child {
-    flex-direction: column !important;
-    align-items: center !important;
-    gap: 8px !important;
-    margin: 0 !important;
-  }
-
-  #serverArea > div:first-child > div {
-    margin-left: 0 !important;
-    align-items: center !important;
-    text-align: center !important;
-  }
-
-  #serverToServerArea {
-    max-width: 100% !important;
-    margin: 0 auto !important;
-    padding: 0 10px;
-  }
-
-  h3 {
-    font-size: 20px !important;
-    margin: 0 0 10px 0 !important;
-    text-align: center !important;
-  }
-  #server,
-  #serverB,
-  #serverPingBtn,
-  #startStopBtn,
-  #serverAName {
-    width: 95% !important;
-    font-size: 16px !important;
-    padding: 10px !important;
-    text-align: center !important;
-  }
-
-  #startStopBtn,
-  #serverPingBtn {
-    margin: 10px auto !important;
-    display: block !important;
-  }
-
-  div[style*="width:3px; height:100%"] {
-    display: none !important;
-  }
-
-  #pingResult,
-  #serverToServerMsg,
-  #errorMessage {
-    font-size: 16px !important;
-    text-align: center !important;
-  }
-
-  #serverToServerArea > div + div {
-    margin-top: 15px !important;
-  }
-} */
-
-
 @media screen and (min-width: 1024px) {
   #testWrapperss {
     margin-right: 20rem;
@@ -2456,23 +2376,19 @@ body {
     margin-right: 0 !important;
   }
 
-  /* Stack everything */
   #serverArea {
     flex-direction: column !important;
     align-items: center !important;
-    /* gap: 12px !important; */
   }
 
   #serverB {
     font-size: 11px !important;
   }
-  /* Label + select vertical in mobile */
   #serverArea > div:first-child {
     flex-direction: column !important;
     text-align: center !important;
   }
 
-  /* Full width inputs/buttons */
   #server,
   #startStopBtn {
     width: 90% !important;
@@ -2550,160 +2466,15 @@ body {
     <img src="removebg-preview.png" alt="ULKA TV Logo" style="height: 150px; width: 350px; margin-top: 30px;"/>
   </div>
     
-    	<h1>NetWork Diagnostics</h1>
-      <div id="loading" class="visible">
-        <p id="message"><span class="loadCircle"></span>Selecting a server...</p>
-      </div>
-      <!-- <div id="testWrapper" class="hidden">
-        <a class="privacy" href="#" onclick="I('privacyPolicy').style.display=''">Privacy</a>
-
-        <div id="serverArea" 
-          style="display:flex; justify-content:center; align-items:center; gap:15px; margin-top:20px;">
-            <div style="display:flex; flex-direction:column; align-items:center;">
-              <label for="server" style="font-weight:bold; color:rgb(244, 235, 235); font-size:18px; margin-top:13px;">Connected Device</label>
-              <span style="font-size:16px; color:rgb(242, 232, 232);">(Laptop / Mobile / Others)</span>
-            </div>
-            <select id="server" onchange="onServerChange()" style="padding:5px; font-size:14px;"></select>
-          <div id="startStopBtn" onclick="startStop()"></div>
-        </div>
-
-        <div id="pingResult" style="color: rgb(207, 182, 182); margin-top: 5px; text-align:center;"></div> 
-        <div id="errorMessage" style="margin-top:15px; font-weight:bold; color:red; display:none; text-align:center;"></div>
-      </div>
-
-    <h3 style="font-size:22px; font-weight:bold; color:rgb(243, 238, 238); margin-bottom:15px;">
-      Server ↔ Server Ping
-    </h3>
-    <div id="serverToServerArea" style="margin-top:30px;">
-      <label for="serverA" style="font-size:15px; font-weight:bold; color:rgb(245, 231, 231);">From:</label>
-        <button 
-          id="serverAName"
-          style="font-size:15px; padding:6px 12px; margin-left:5px; font-weight:bold; color:#333; background:white; border:1px solid #ccc; border-radius:6px; cursor:default;">
-          Main CDN Server
-      </button>
-      <label for="serverB" style="font-size:15px; font-weight:bold; color:rgb(220, 207, 207); margin-left:20px;">To:</label>
-      <select id="serverB" style="font-size:15px; padding:5px; margin-left:5px;"></select>
-
-      <button 
-        onclick="pingBetweenServers()" 
-        style="margin-left:20px; font-size:18px; padding:8px 15px; background:#ee4624; color:white; border:none; border-radius:6px; cursor:pointer;">
-        Start
-      </button>
-
-      <p id="serverToServerMsg" style="margin-top:15px; font-size:18px; font-weight:bold; color:black;"></p>
-    </div> -->
-
-
-    <!-- <div style="display:flex; justify-content:space-between; gap:40px; margin-top:20px;">
-
-      <div id="testWrapper" style="flex:1; max-width:48%;">
-        <a class="privacy" href="#" onclick="I('privacyPolicy').style.display=''">Privacy</a>
-
-        <div id="serverArea" 
-          style="display:flex; justify-content:center; align-items:center; gap:15px; margin-top:20px;">
-            <div style="display:flex; flex-direction:column; align-items:center;">
-              <label for="server" style="font-weight:bold; color:rgb(244, 235, 235); font-size:18px; margin-top:13px;">Connected Device</label>
-              <span style="font-size:16px; color:rgb(242, 232, 232);">(Laptop / Mobile / Others)</span>
-            </div>
-            <select id="server" onchange="onServerChange()" style="padding:5px; font-size:14px;"></select>
-          <div id="startStopBtn" onclick="startStop()"></div>
-        </div>
-
-        <div id="pingResult" style="color: rgb(207, 182, 182); margin-top: 5px; text-align:center;"></div> 
-        <div id="errorMessage" style="margin-top:15px; font-weight:bold; color:red; display:none; text-align:center;"></div>
-      </div>
-
-      <div style="flex:1; max-width:48%;">
-        <h3 style="font-size:22px; font-weight:bold; color:rgb(243, 238, 238); margin-bottom:15px; text-align:center;">
-          Server ↔ Server Ping
-        </h3>
-        <div id="serverToServerArea" style="margin-top:30px; text-align:center;">
-          <label for="serverA" style="font-size:15px; font-weight:bold; color:rgb(245, 231, 231);">From:</label>
-            <button 
-              id="serverAName"
-              style="font-size:15px; padding:6px 12px; margin-left:5px; font-weight:bold; color:#333; background:white; border:1px solid #ccc; border-radius:6px; cursor:default;">
-              Main CDN Server
-          </button>
-          <label for="serverB" style="font-size:15px; font-weight:bold; color:rgb(220, 207, 207); margin-left:20px;">To:</label>
-          <select id="serverB" style="font-size:15px; padding:5px; margin-left:5px;"></select>
-
-          <button 
-            onclick="pingBetweenServers()" 
-            style="margin-left:20px; font-size:18px; padding:8px 15px; background:#ee4624; color:white; border:none; border-radius:6px; cursor:pointer;">
-            Start
-          </button>
-
-          <p id="serverToServerMsg" style="margin-top:15px; font-size:18px; font-weight:bold; color:black;"></p>
-        </div>
-      </div>
-
-    </div> -->
-
-
-
-  <!-- <div style="display:flex; justify-content:space-between; align-items:stretch; margin-top:20px;">
-    <div id="testWrapper" style="flex:1; max-width:48%;">
-      <h3 style="font-size:22px; font-weight:bold; color:rgb(243, 238, 238); margin-left: 22rem; margin-bottom:15px; text-align:center;">
-        Connected Device Laptop
-      </h3>
-      <div id="serverArea" 
-        style="display:flex; flex-direction:column; justify-content:center; align-items:center; gap:1px; margin-top:20px;">
-          <div style="display:flex; justify-content:center; align-items:center; gap:15px;">
-          <div style="display:flex;flex-direction:column;align-items: self-start;margin-left: 24rem;">
-            <label for="server" style="font-weight:bold; color:rgb(244, 235, 235); font-size:18px; margin-top:13px;">Client-Servers</label>
-            <span style="font-size:16px; color:rgb(242, 232, 232);">(Laptop / Mobile / Others)</span>
-          </div>
-          <select id="server" onchange="onServerChange()" style="padding:5px; font-size:14px;"></select>
-        </div>
-          <div style="margin-top:15px; margin-left: 24rem;">
-            <div id="startStopBtn" onclick="startStop()"></div>
-          </div>
-      </div>
-      <div id="pingResult" style="color: rgb(207, 182, 182); margin-top: 5px; text-align:center;"></div> 
-      <div id="errorMessage" style="margin-top:15px; font-weight:bold; color:red; display:none; text-align:center;"></div>
-    </div>
-
-
-    <div style="display:flex; align-items:center; justify-content:center; padding:0 10px;">
-      <div style="width:3px; height:100%; background:white; border-radius:2px;"></div>
-    </div>
-
-    <div style="flex:1; max-width:48%;">
-      <h3 style="font-size:22px; font-weight:bold; color:rgb(243, 238, 238); margin-right: 20rem; margin-bottom:15px; text-align:center;">
-        Server ↔ Server Ping
-      </h3>
-
-      <div id="serverToServerArea" style="margin-top:30px; text-align:center; display:flex; flex-direction:column; align-items:center; margin-right: 19rem;">
-        <div style="display:flex; justify-content:center; align-items:center; gap:15px;">
-          <label for="serverA" style="font-size:15px; font-weight:bold; color:rgb(245, 231, 231);">From:</label>
-          <button 
-            id="serverAName"
-            style="font-size:15px; padding:6px 12px; font-weight:bold; color:#333; background:white; border:1px solid #ccc; border-radius:6px; cursor:default;">
-            Main CDN Server
-          </button>
-
-          <label for="serverB" style="font-size:15px; font-weight:bold; color:rgb(220, 207, 207); margin-left:20px;">To:</label>
-          <select id="serverB" style="font-size:15px; padding:5px;"></select>
-        </div>
-        
-        <div style="margin-top:10px;">
-          <button 
-            id="serverPingBtn"
-            onclick="pingBetweenServers()">
-          </button>
-        </div>
-        <p id="serverToServerMsg" style="margin-top:15px; font-size:18px; font-weight:bold; color:black;"></p>
-      </div>
-    </div>
-  </div> -->
-
-
+  <h1>NetWork Diagnostics</h1>
+  <div id="loading" class="visible">
+    <p id="message"><span class="loadCircle"></span>Selecting a server...</p>
+  </div>
   <a class="privacy" href="#" onclick="I('privacyPolicy').style.display=''">Privacy</a>
-   <!-- left-side -->
   <div id="testWrapperss" style="display:flex; justify-content:space-between; align-items:stretch; margin-top:20px;">
     <div id="testWrapper" style="flex:1; max-width:48%; text-align:center;">
       <h3 style="font-size:22px; font-weight:bold; color:rgb(243, 238, 238); margin-bottom:15px;">
-        Connected Device Laptop
+        Device ➡︎ Server Ping
       </h3>
 
       <div id="serverArea" 
@@ -2711,9 +2482,17 @@ body {
 
         <div style="display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap;">
           <div style="display:flex; flex-direction:column; text-align:right;">
-            <label for="server" style="font-weight:bold; color:rgb(244, 235, 235); font-size:18px;">Client-Servers</label>
-            <span style="font-size:16px; color:rgb(242, 232, 232);">(Laptop / Mobile / Others)</span>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <label for="serverA" style="font-size:15px; font-weight:bold; color:rgb(245, 231, 231);">From:</label>
+              <button 
+                style="margin-left:10px; padding:5px 10px; background:white; color:black; border:none; border-radius:4px; cursor:pointer; margin-top: 10px;">
+                Client-Servers
+              </button>
+            </div>
+            <span style="font-size:14px; color:rgb(251, 248, 248); margin-top: 3px;">(Laptop / Mobile / Others)</span>
           </div>
+          <label for="serverB" style="font-size:15px; font-weight:bold; color:rgb(245, 242, 242);">To:</label>
+
           <select id="server" onchange="onServerChange()" style="padding:5px; font-size:14px;"></select>
         </div>
         <div>
@@ -2724,16 +2503,13 @@ body {
       <div id="pingResult" style="color: rgb(207, 182, 182); margin-top: 5px; text-align:center;"></div> 
       <div id="errorMessage" style="margin-top:15px; font-weight:bold; color:red; display:none; text-align:center;"></div>
     </div>
-
-    <!-- divider -->
     <div class="divider" style="display:flex; align-items:center; justify-content:center; padding:0 10px;">
       <div style="width:3px; height:100%; background:white; border-radius:2px;"></div>
     </div>
     
-    <!-- Rightside -->
     <div style="flex:1; max-width:48%;">
       <h3 style="font-size:22px; font-weight:bold; color:rgb(243, 238, 238); margin-bottom:15px; text-align:center;">
-        Server ↔ Server Ping
+        Server ➡︎ Server Ping
       </h3>
 
       <div id="serverToServerArea" style="margin-top:30px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:12px;">
@@ -2756,9 +2532,6 @@ body {
       </div>
     </div>
   </div>
-
-
-
 
   <div id="test">
     <div class="testGroup">
@@ -2864,5 +2637,3 @@ body {
 </div>
 </body>
 </html>
-
-
