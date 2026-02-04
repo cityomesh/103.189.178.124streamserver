@@ -6,64 +6,32 @@
 //   : "http://10.10.148.25/";    // Server lo run chesthe idi
 var SPEEDTEST_SERVERS = [
    {
-    name: "Main CDN IP",
-    server: "//192.168.12.103/",   // correct format
-    dlURL: "backend/garbage.php",
-    ulURL: "backend/empty.php",
-    pingURL: "backend/empty.php",
-    getIpURL: "backend/getIP.php"
-  },
-  //  {
-  //   name: "streamtv",
-  //   server: "//103.189.178.121/streamtv/",   // correct format
-  //   dlURL: "backend/garbage.php",
-  //   ulURL: "backend/empty.php",
-  //   pingURL: "backend/empty.php",
-  //   getIpURL: "backend/getIP.php"
-  // },
-    {
-    name: "CDN DSN3",
-    server: "//10.6.6.165/",
+    name: "SIFY CDN",
+    server: "//192.168.12.65/",   // correct format
     dlURL: "backend/garbage.php",
     ulURL: "backend/empty.php",
     pingURL: "backend/empty.php",
     getIpURL: "backend/getIP.php"
   },
     {
-    name: "BLCRDHE EDGECDN1006",
-    server: "//10.7.7.252/",
-    dlURL: "backend/garbage.php",
-    ulURL: "backend/empty.php",
-    pingURL: "backend/empty.php",
-    getIpURL: "backend/getIP.php"
-  },
-   {
-    name: "KAMALAMILLSHATHWAY1007",
-    server: "//172.31.42.2/",
+    name: "SPIDERLINK JAIPUR",
+    server: "//192.168.24.5/",
     dlURL: "backend/garbage.php",
     ulURL: "backend/empty.php",
     pingURL: "backend/empty.php",
     getIpURL: "backend/getIP.php"
   },
     {
-    name: "HYDERABAD EDGECDN1008",
-    server: "//172.31.32.2/",
+    name: "SHARPLINK INDORE CDN",
+    server: "//192.168.25.5/",
     dlURL: "backend/garbage.php",
     ulURL: "backend/empty.php",
     pingURL: "backend/empty.php",
     getIpURL: "backend/getIP.php"
   },
-   {
-    name: "KANPUR EXCITEL",
-    server: "//172.29.3.178/",
-    dlURL: "backend/garbage.php",
-    ulURL: "backend/empty.php",
-    pingURL: "backend/empty.php",
-    getIpURL: "backend/getIP.php"
-  },
-      {
-    name: "Testing",
-    server: "//192.168.12.53/",
+  {
+    name: "SPIDERLINK_NOIDA",
+    server: "//192.168.27.5/",
     dlURL: "backend/garbage.php",
     ulURL: "backend/empty.php",
     pingURL: "backend/empty.php",
@@ -72,10 +40,7 @@ var SPEEDTEST_SERVERS = [
 ];
 
 var CLIENTS = [
-  { name: "CDN DSN3", ip: "10.6.6.165" },
-  { name: "BLCRDHE EDGECDN1006", ip: "10.7.7.252" },
-  { name: "KAMALAMILLSHATHWAY1007", ip: "172.31.42.2" },
-  { name: "HYDERABAD EDGECDN1008", ip: "172.31.32.2" },
-  { name: "KANPUR EXCITEL", ip: "172.29.3.178" },
-  { name: "Testing", ip: "192.168.12.53" }
+  { name: "SIFY CDN", ip: "192.168.24.5" },
+  { name: "SHARPLINK INDORE CDN", ip: "192.168.25.5" },
+  { name: "SPIDERLINK_NOIDA", ip: "192.168.27.5" },
 ];

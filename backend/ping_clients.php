@@ -3,12 +3,9 @@ header("Content-Type: application/json");
 
 // --- Clients list (name + ip) ---
 $clients = [
-  [ "name" => "CDN DSN3", "ip" => "10.6.6.165" ],
-  [ "name" => "BLCRDHE EDGECDN1006", "ip" => "10.7.7.252" ],
-  [ "name" => "KAMALAMILLSHATHWAY1007", "ip" => "172.31.42.2" ],
-  [ "name" => "HYDERABAD EDGECDN1008", "ip" => "172.31.32.2" ],
-  [ "name" => "KANPUR EXCITEL", "ip" => "172.29.3.178" ],
-  [ "name" => "Testing", "ip" => "192.168.12.53" ]
+  [ "name" => "CDN DSN3", "ip" => "192.168.24.5" ],
+  [ "name" => "SHARPLINK INDORE CDN", "ip" => "192.168.25.5" ],
+  [ "name" => "SPIDERLINK_NOIDA", "ip" => "192.168.27.5" ]
 ];
 
 $results = [];

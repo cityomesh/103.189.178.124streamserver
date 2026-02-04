@@ -32,7 +32,7 @@ function initServerToServerDropdown() {
   };
   
 function testPing(targetIp) {
-  fetch(`http://192.168.12.103/MainCdnServer/backend/ping_server_to_server.php?to=${encodeURIComponent(targetIp)}`)
+  fetch(`http://192.168.12.65/sifycdn/backend/ping_server_to_server.php?to=${encodeURIComponent(targetIp)}`)
     .then(res => res.json())
     .then(data => {
       if (data.status === "ok") {
@@ -76,8 +76,8 @@ function pingBetweenServers() {
 
     const backendUrl =
         `http://103.189.178.118/backend/pingProxy.php` +
-        `?target=192.168.12.103` +
-        `&path=MainCdnServer/backend/ping_server_to_server.php` +
+        `?target=192.168.12.65` +
+        `&path=sifycdn/backend/ping_server_to_server.php` +
         `&from=${getServerIp(serverA.server)}` +
         `&to=${getServerIp(serverB.server)}`;
 
@@ -181,82 +181,46 @@ function I(i){return document.getElementById(i);}
 
 
 var SPEEDTEST_SERVERS = [
-  //  {
-  //  name: "client",
-  //   server: "//103.189.178.121/streamtv/",   // correct format
-  //   dlURL: "backend/garbage.php",
-  //   ulURL: "backend/empty.php",
-  //   pingURL: "backend/empty.php",
-  //   getIpURL: "backend/getIP.php"
-  // },
   {
-    name: "Main CDN IP",
-    server: "//192.168.12.103/",   // correct format
-    dlURL: "backend/garbage.php",
-    ulURL: "backend/empty.php",
-    pingURL: "backend/empty.php",
-    getIpURL: "backend/getIP.php"
-  },
-
-    {
-    name: "CDN DSN3",
-    server: "//10.6.6.165/",
+    name: "SIFY CDN",
+    server: "//192.168.12.65/",   // correct format
     dlURL: "backend/garbage.php",
     ulURL: "backend/empty.php",
     pingURL: "backend/empty.php",
     getIpURL: "backend/getIP.php"
   },
     {
-    name: "BLCRDHE EDGECDN1006",
-    server: "//10.7.7.252/",
-    dlURL: "backend/garbage.php",
-    ulURL: "backend/empty.php",
-    pingURL: "backend/empty.php",
-    getIpURL: "backend/getIP.php"
-  },
-   {
-    name: "KAMALAMILLSHATHWAY1007",
-    server: "//172.31.42.2/",
+    name: "SPIDERLINK JAIPUR",
+    server: "//192.168.24.5/",
     dlURL: "backend/garbage.php",
     ulURL: "backend/empty.php",
     pingURL: "backend/empty.php",
     getIpURL: "backend/getIP.php"
   },
     {
-    name: "HYDERABAD EDGECDN1008",
-    server: "//172.31.32.2/",
+    name: "SHARPLINK INDORE CDN",
+    server: "//192.168.25.5/",
     dlURL: "backend/garbage.php",
     ulURL: "backend/empty.php",
     pingURL: "backend/empty.php",
     getIpURL: "backend/getIP.php"
   },
-   {
-    name: "KANPUR EXCITEL",
-    server: "//172.29.3.178/",
-    dlURL: "backend/garbage.php",
-    ulURL: "backend/empty.php",
-    pingURL: "backend/empty.php",
-    getIpURL: "backend/getIP.php"
-  },
-      {
-    name: "Testing",
-    server: "//192.168.12.53/",
+  {
+    name: "SPIDERLINK_NOIDA",
+    server: "//192.168.27.5/",
     dlURL: "backend/garbage.php",
     ulURL: "backend/empty.php",
     pingURL: "backend/empty.php",
     getIpURL: "backend/getIP.php"
   },
 ];
-
 
 const CLIENTS = [
-  { name: "CDN DSN3", ip: "10.6.6.165" },
-  { name: "BLCRDHE EDGECDN1006", ip: "10.7.7.252" },
-  { name: "KAMALAMILLSHATHWAY1007", ip: "172.31.42.2" },
-  { name: "HYDERABAD EDGECDN1008", ip: "172.31.32.2" },
-  { name: "KANPUR EXCITEL", ip: "172.29.3.178" },
-  { name: "Testing", ip: "192.168.12.53" }
+  { name: "SIFY CDN", ip: "192.168.24.5" },
+  { name: "SHARPLINK INDORE CDN", ip: "192.168.25.5" },
+  { name: "SPIDERLINK_NOIDA", ip: "192.168.27.5" },
 ];
+
 // ✅ Add ping() function here
 async function testPing(server) {
   try {
@@ -326,10 +290,8 @@ function initServers() {
         }
       }
 
-      // ✅ From (serverA) ఎప్పుడూ Main CDN Server మాత్రమే చూపాలి
       I("serverAName").textContent = SPEEDTEST_SERVERS[preferredIndex].name;
 
-      // Set ping result initially
       onServerChange();
 
       // Show test UI
@@ -383,7 +345,7 @@ function checkClientPings() {
   resultsDiv.innerHTML = ""; // reset previous results
 
   CLIENTS.forEach(client => {
-    fetch(`http://192.168.12.103/MainCdnServer/backend/ping_clients.php?target=${encodeURIComponent(client.ip)}`)
+    fetch(`http://192.168.12.65/sifycdn/backend/ping_clients.php?target=${encodeURIComponent(client.ip)}`)
       .then(res => res.json())
       .then(data => {
         console.log(`✅ ${client.name} (${client.ip}) Ping Results:`, data);
@@ -434,7 +396,7 @@ function onServerChange() {
   const serverIp = getServerIp(selectedServer.server); // direct IP
 
   // Always hit Main CDN to check latency
-  const pingURL = `http://192.168.12.103/MainCdnServer/backend/ping_server.php?target=${encodeURIComponent(serverIp)}&t=${Math.random()}`;
+  const pingURL = `http://192.168.12.65/sifycdn/backend/ping_server.php?target=${encodeURIComponent(serverIp)}&t=${Math.random()}`;
 
   fetch(pingURL, { method: "GET", cache: "no-cache" })
     .then(res => res.json())
@@ -629,7 +591,7 @@ function startStop() {
 
         // ✅ Save results to Main CDN server
         fetch(
-          "http://192.168.12.103/MainCdnServer/backend/save_results.php",
+          "http://192.168.12.65/sifycdn/backend/save_results.php",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -647,7 +609,7 @@ function startStop() {
         // 🔥 EXTRA: Server-to-Server check
         try {
           const res = await fetch(
-            "http://192.168.12.103/MainCdnServer/backend/ping_server_to_server.php?to=" +
+            "http://192.168.12.65/sifycdn/backend/ping_server_to_server.php?to=" +
               ip
           );
           const data = await res.json();
@@ -669,7 +631,7 @@ function startStop() {
 
           // ✅ Re-save with server-to-server results
           fetch(
-            "http://192.168.12.103/MainCdnServer/backend/save_results.php",
+            "http://192.168.12.65/sifycdn/backend/save_results.php",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },

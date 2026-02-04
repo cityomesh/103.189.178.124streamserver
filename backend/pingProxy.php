@@ -26,7 +26,7 @@ if (empty($_GET['target']) || empty($_GET['path'])) {
     exit;
 }
 
-$target = $_GET['target']; // e.g. 192.168.12.103
+$target = $_GET['target'];
 $path   = $_GET['path'];   // e.g. MainCdnServer/backend/ping_server_to_server.php
 
 // Remove target & path from query string, keep rest
